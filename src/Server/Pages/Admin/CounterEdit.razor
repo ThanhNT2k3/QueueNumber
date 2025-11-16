@@ -1,0 +1,150 @@
+@page "/admin/counters/new"
+@page "/admin/counters/{CounterId:int}"
+
+@using global::Shared.Models
+@using Server.Services
+@inject ICounterService CounterService
+@inject IBranchService BranchService
+@inject IServiceTypeService ServiceTypeService
+@inject NavigationManager Navigation
+@inject ILogger<CounterEdit> Logger
+
+<PageTitle>@(IsNew ? "Create Counter" : "Edit Counter")</PageTitle>
+
+<div class="container-fluid p-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>@(IsNew ? "Create New Counter" : "Edit Counter")</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@Counter" OnValidSubmit="@HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <InputText class="form-control" @bind-Value="Counter.Name" />
+                            <ValidationMessage For="@(() => Counter.Name)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Branch *</label>
+                            <InputSelect class="form-select" @bind-Value="Counter.BranchId">
+                                <option value="">Select Branch</option>
+                                @if (Branches != null)
+                                {
+                                    @foreach (var branch in Branches)
+                                    {
+                                        <option value="@branch.BranchId">@branch.Name</option>
+                                    }
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => Counter.BranchId)" />
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <InputCheckbox class="form-check-input" @bind-Value="Counter.IsActive" />
+                                <label class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Supported Service Types</label>
+                            @if (AllServiceTypes != null)
+                            {
+                                <div class="border p-3" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach (var serviceType in AllServiceTypes)
+                                    {
+                                        <div class="form-check">
+                                            <InputCheckbox class="form-check-input" 
+                                                          checked="@IsServiceTypeSelected(serviceType.ServiceTypeId)"
+                                                          @onchange="@((e) => ToggleServiceType(serviceType, e.Value))" />
+                                            <label class="form-check-label">@serviceType.Name (@serviceType.Prefix)</label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">@(IsNew ? "Create" : "Save")</button>
+                            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? CounterId { get; set; }
+
+    private global::Shared.Models.Counter Counter = new();
+    private List<Branch>? Branches;
+    private List<ServiceType>? AllServiceTypes;
+    private bool IsNew => !CounterId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Branches = await BranchService.GetAllBranchesAsync();
+        AllServiceTypes = await ServiceTypeService.GetAllServiceTypesAsync();
+
+        if (CounterId.HasValue)
+        {
+            Counter = await CounterService.GetCounterByIdAsync(CounterId.Value) ?? new global::Shared.Models.Counter();
+        }
+    }
+
+    private bool IsServiceTypeSelected(int serviceTypeId)
+    {
+        return Counter.SupportedServices?.Any(s => s.ServiceTypeId == serviceTypeId) ?? false;
+    }
+
+    private void ToggleServiceType(ServiceType serviceType, object? isChecked)
+    {
+        if (Counter.SupportedServices == null)
+        {
+            Counter.SupportedServices = new List<ServiceType>();
+        }
+
+        if (isChecked is bool checkedValue && checkedValue)
+        {
+            if (!Counter.SupportedServices.Any(s => s.ServiceTypeId == serviceType.ServiceTypeId))
+            {
+                Counter.SupportedServices.Add(serviceType);
+            }
+        }
+        else
+        {
+            var toRemove = Counter.SupportedServices.FirstOrDefault(s => s.ServiceTypeId == serviceType.ServiceTypeId);
+            if (toRemove != null)
+            {
+                Counter.SupportedServices.Remove(toRemove);
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                await CounterService.CreateCounterAsync(Counter);
+            }
+            else
+            {
+                await CounterService.UpdateCounterAsync(Counter);
+            }
+            Navigation.NavigateTo("/admin/counters");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving counter");
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/admin/counters");
+    }
+}
+

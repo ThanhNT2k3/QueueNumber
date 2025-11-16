@@ -1,0 +1,324 @@
+﻿@page "/counter/{CounterId:int}"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using global::Shared.Models
+@using Server.Services
+@inject ICounterService CounterService
+@inject ITicketService TicketService
+@inject NavigationManager Navigation
+@inject ILogger<CounterPage> Logger
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Counter @CounterId</PageTitle>
+
+@if (CounterInfo == null)
+{
+    <div class="container mt-4">
+        <div class="alert alert-warning">Đang tải thông tin quầy...</div>
+    </div>
+}
+else
+{
+    <div class="container-fluid p-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3>Quầy: @CounterInfo.Name</h3>
+                        <p class="mb-0">Chi nhánh: @CounterInfo.Branch.Name</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card @(CurrentTicket != null ? "bg-warning" : "bg-light")">
+                                    <div class="card-body text-center">
+                                        <h5>Đang phục vụ</h5>
+                                        @if (CurrentTicket != null)
+                                        {
+                                            <div class="display-3 fw-bold">@CurrentTicket.DisplayNumber</div>
+                                            <p>@CurrentTicket.ServiceType.Name</p>
+                                            <p class="small">Bắt đầu: @CurrentTicket.CalledAt?.ToString("HH:mm:ss")</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted">Không có</p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h5>Trạng thái</h5>
+                                        <div class="display-6">
+                                            @if (CounterInfo.IsBusy)
+                                            {
+                                                <span class="badge bg-danger">Bận</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Rảnh</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5>Hành động</h5>
+                            <div class="btn-group-vertical w-100" role="group">
+                                <button class="btn btn-success btn-lg mb-2" 
+                                        @onclick="CallNextTicket" 
+                                        disabled="@(WaitingTickets.Where(t => t.AssignedCounterId == CounterInfo.CounterId).Count() == 0 || CounterInfo.IsBusy)">
+                                    Gọi số tiếp theo
+                                </button>
+                                @if (CurrentTicket != null)
+                                {
+                                    <button class="btn btn-primary btn-lg mb-2" 
+                                            @onclick="CompleteCurrentTicket">
+                                        Hoàn thành
+                                    </button>
+                                    <button class="btn btn-warning btn-lg mb-2" 
+                                            @onclick="SkipCurrentTicket">
+                                        Bỏ qua
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-lg mb-2" 
+                                            @onclick="MoveCurrentTicketToEnd">
+                                        Chuyển xuống cuối
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-header bg-secondary text-white">
+                        <h5>Danh sách chờ (@WaitingTickets.Count)</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        @if (WaitingTickets.Count == 0)
+                        {
+                            <p class="text-muted text-center">Không có khách chờ</p>
+                        }
+                        else
+                        {
+                            <div class="list-group">
+                                @foreach (var ticket in WaitingTickets.Where(t => t.AssignedCounterId == CounterInfo.CounterId))
+                                {
+                                    <div class="list-group-item list-group-item-warning">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>@ticket.DisplayNumber</strong>
+                                                <br />
+                                                <small>@ticket.ServiceType.Name</small>
+                                            </div>
+                                            <div class="d-flex flex-column align-items-end">
+                                                <small>@ticket.CreatedAt.ToString("HH:mm")</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int CounterId { get; set; }
+
+    private global::Shared.Models.Counter? CounterInfo;
+    private List<Ticket> WaitingTickets = new();
+    private Ticket? CurrentTicket;
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCounter();
+        await LoadWaitingTickets();
+        await LoadCurrentTicket();
+        await InitializeSignalR();
+    }
+
+    private async Task LoadCounter()
+    {
+        CounterInfo = await CounterService.GetCounterByIdAsync(CounterId);
+        if (CounterInfo == null)
+        {
+            Logger.LogWarning("Counter {CounterId} not found", CounterId);
+        }
+    }
+
+    private async Task LoadWaitingTickets()
+    {
+        if (CounterInfo != null)
+        {
+            WaitingTickets = await TicketService.GetWaitingTicketsAsync(CounterInfo.BranchId);
+        }
+    }
+
+    private async Task LoadCurrentTicket()
+    {
+        if (CounterInfo != null)
+        {
+            CurrentTicket = await TicketService.GetServingTicketAsync(CounterInfo.CounterId);
+        }
+    }
+
+    private async Task InitializeSignalR()
+    {
+        if (CounterInfo == null) return;
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hub/ticket"))
+            .Build();
+
+        hubConnection.On<Ticket>("ticketGenerated", async (ticket) =>
+        {
+            if (ticket.BranchId == CounterInfo?.BranchId)
+            {
+                await LoadWaitingTickets();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketAssigned", async (ticket) =>
+        {
+            if (ticket.AssignedCounterId == CounterInfo?.CounterId || ticket.BranchId == CounterInfo?.BranchId)
+            {
+                await LoadWaitingTickets();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketCalled", async (ticket) =>
+        {
+            if (ticket.AssignedCounterId == CounterInfo?.CounterId)
+            {
+                await LoadCurrentTicket();
+                await LoadWaitingTickets();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketCompleted", async (ticket) =>
+        {
+            if (ticket.AssignedCounterId == CounterInfo?.CounterId)
+            {
+                CurrentTicket = null;
+                await LoadWaitingTickets();
+                await LoadCounter();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketSkipped", async (ticket) =>
+        {
+            if (ticket.AssignedCounterId == CounterInfo?.CounterId)
+            {
+                CurrentTicket = null;
+                await LoadWaitingTickets();
+                await LoadCounter();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        await hubConnection.StartAsync();
+        await hubConnection.SendAsync("JoinBranchGroup", CounterInfo.BranchId);
+        await hubConnection.SendAsync("JoinCounterGroup", CounterInfo.CounterId);
+    }
+
+    private async Task CallNextTicket()
+    {
+        if (CounterInfo == null) return;
+
+        // Ensure there are waiting tickets
+        if (!WaitingTickets.Any())
+        {
+            Logger.LogInformation("No waiting tickets for Counter {CounterId}", CounterInfo.CounterId);
+            return;
+        }
+
+        // Only call tickets assigned to this counter
+        var nextTicket = WaitingTickets
+            .Where(t => t.AssignedCounterId == CounterInfo.CounterId)
+            .OrderBy(t => t.CreatedAt)
+            .FirstOrDefault();
+
+        if (nextTicket != null)
+        {
+            var success = await TicketService.CallTicketAsync(nextTicket.TicketId, CounterInfo.CounterId);
+            if (success)
+            {
+                Logger.LogInformation("Called ticket {TicketId} for Counter {CounterId}", nextTicket.TicketId, CounterInfo.CounterId);
+                await LoadCurrentTicket();
+                await LoadWaitingTickets();
+                StateHasChanged();
+            }
+            else
+            {
+                Logger.LogError("Failed to call ticket {TicketId} for Counter {CounterId}", nextTicket.TicketId, CounterInfo.CounterId);
+            }
+        }
+        else
+        {
+            Logger.LogInformation("No tickets assigned to Counter {CounterId}", CounterInfo.CounterId);
+        }
+    }
+
+    private async Task CompleteCurrentTicket()
+    {
+        if (CurrentTicket == null || CounterInfo == null) return;
+
+        var success = await TicketService.CompleteTicketAsync(CurrentTicket.TicketId);
+        if (success)
+        {
+            CurrentTicket = null;
+            await LoadWaitingTickets();
+            await LoadCounter();
+        }
+    }
+
+    private async Task MoveCurrentTicketToEnd()
+    {
+        if (CurrentTicket == null || CounterInfo == null) return;
+
+        var success = await TicketService.MoveTicketToEndAsync(CurrentTicket.TicketId);
+        if (success)
+        {
+            CurrentTicket = null;
+            await LoadWaitingTickets();
+            await LoadCounter();
+        }
+    }
+
+    private async Task SkipCurrentTicket()
+    {
+        if (CurrentTicket == null || CounterInfo == null) return;
+
+        var success = await TicketService.SkipTicketAsync(CurrentTicket.TicketId);
+        if (success)
+        {
+            CurrentTicket = null;
+            await LoadWaitingTickets();
+            await LoadCounter();
+            StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

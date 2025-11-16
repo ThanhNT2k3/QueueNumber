@@ -1,0 +1,579 @@
+@page "/display"
+@page "/display/{BranchId:int}"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using global::Shared.Models
+@using Server.Services
+@inject ITicketService TicketService
+@inject IBranchService BranchService
+@inject ICounterService CounterService
+@inject NavigationManager Navigation
+@inject ILogger<Display> Logger
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Display Screen</PageTitle>
+
+<div class="display-container">
+    @if (SelectedBranch == null)
+    {
+        <div class="container-fluid text-center p-5">
+            <h2 style="color: white; margin-bottom: 3rem;">Chọn chi nhánh để hiển thị</h2>
+            @if (Branches == null)
+            {
+                <p style="color: white; font-size: 1.2rem;">Đang tải...</p>
+            }
+            else
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto;">
+                    @foreach (var branch in Branches)
+                    {
+                        <button style="background: linear-gradient(135deg, #0b63ff 0%, #4d9aff 100%); color: white; border: none; border-radius: 12px; padding: 2rem; font-size: 1.3rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(0,0,0,0.2);" 
+                                @onclick="() => SelectBranch(branch.BranchId)">
+                            <h3 style="margin: 0; color: white;">@branch.Name</h3>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="max-width: 1400px; margin: 0 auto;">
+            <div class="display-header">
+                <h1>@SelectedBranch.Name</h1>
+                <p>@DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")</p>
+            </div>
+
+            <div class="calling-section">
+                <div id="callingArea" class="calling-card">
+                    <button class="sound-toggle" @onclick="ToggleSound" style="background: #f5f7fa; border: none; border-radius: 4px; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer;">
+                        @if (SoundEnabled) { <span>🔔 Âm: ON</span> } else { <span>🔕 Âm: OFF</span> }
+                    </button>
+                    <div class="calling-title" style="font-size: 2.2rem; font-weight: bold; color: #003366; text-align: center; margin-bottom: 2rem;">Đang gọi</div>
+                    <div class="calling-grid" style="display: flex; flex-direction: column; align-items: center; gap: 2rem;">
+                        @foreach (var call in CurrentCalls)
+                        {
+                            <div style="background: #fff; border-radius: 18px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); padding: 2.5rem 3rem; min-width: 320px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                                <div style="font-size: 3.5rem; font-weight: bold; color: #d4a574; margin-bottom: 0.5rem; letter-spacing: 2px;">@call.Ticket.DisplayNumber</div>
+                                <div style="font-size: 1.5rem; color: #003366; font-weight: 600; margin-bottom: 0.5rem;">Quầy @call.Counter.Name</div>
+                                <div style="font-size: 1.2rem; color: #6c757d;">@call.Ticket.ServiceType.Name</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="waiting-section" style="margin-top: 2rem;">
+                @{
+                    var assigned = WaitingTickets.Where(t => t.AssignedCounterId.HasValue).ToList();
+                }
+                <div class="waiting-header" style="text-align: center;">
+                    <h3 style="font-size: 1.8rem; color: #003366;">Danh sách chờ</h3>
+                    <div class="waiting-stats" style="font-size: 1rem; color: #6c757d;">
+                        <div>Tổng: <strong>@assigned.Count</strong></div>
+                    </div>
+                </div>
+
+                <div class="waiting-columns" style="display: flex; gap: 1.5rem; margin-top: 1rem;">
+                    <div class="waiting-group" style="flex: 1;">
+                        <div class="waiting-group-title" style="font-size: 1.2rem; color: #003366;">Đã phân quầy (@assigned.Count)</div>
+                        @if (assigned.Count == 0)
+                        {
+                            <p class="empty-message" style="font-size: 1rem; color: #6c757d;">Chưa có vé được phân quầy</p>
+                        }
+                        else
+                        {
+                            <div class="waiting-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                                @foreach (var ticket in assigned.Take(20))
+                                {
+                                    <div class="waiting-card assigned-card" style="background: #ffffff; border-radius: 8px; padding: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                                        <div class="number" style="font-size: 1.2rem; color: #003366;">@ticket.DisplayNumber</div>
+                                        <div class="service" style="font-size: 1rem; color: #6c757d;">@ticket.ServiceType.Name</div>
+                                        <div class="assigned-badge" style="background-color: #d4a574; color: #003366; padding: 0.5rem; border-radius: 4px;">✓ Đã phân quầy</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* Group tickets by counter for both serving and waiting *@
+            @foreach (var counter in Counters)
+            {
+                <div style="margin-bottom: 2.5rem;">
+                    <h2 style="color: #003366; font-size: 1.7rem; font-weight: bold; margin-bottom: 1rem;">Quầy @counter.Name</h2>
+                    <div style="display: flex; gap: 2rem; align-items: flex-start;">
+                        <div style="min-width: 260px;">
+                            <h4 style="color: #178aff; font-size: 1.2rem; margin-bottom: 0.7rem;">Đang xử lý</h4>
+                            @if (ServingTicketsByCounter.ContainsKey(counter.CounterId) && ServingTicketsByCounter[counter.CounterId].Count > 0)
+                            {
+                                @foreach (var ticket in ServingTicketsByCounter[counter.CounterId])
+                                {
+                                    <div style="background: #fff; border-radius: 18px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); padding: 1.5rem 2rem; text-align: center; margin-bottom: 1rem;">
+                                        <div style="font-size: 2.5rem; font-weight: bold; color: #d4a574; margin-bottom: 0.5rem;">@ticket.DisplayNumber</div>
+                                        <div style="font-size: 1.2rem; color: #003366; font-weight: 600; margin-bottom: 0.5rem;">@ticket.ServiceType.Name</div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div style="color: #6c757d; font-size: 1.1rem;">Không có</div>
+                            }
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="color: #178aff; font-size: 1.2rem; margin-bottom: 0.7rem;">Đang chờ</h4>
+                            @if (WaitingTicketsByCounter.ContainsKey(counter.CounterId) && WaitingTicketsByCounter[counter.CounterId].Count > 0)
+                            {
+                                <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                                    @foreach (var ticket in WaitingTicketsByCounter[counter.CounterId])
+                                    {
+                                        <div style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 1rem 1.5rem; min-width: 120px; text-align: center;">
+                                            <div style="font-size: 1.3rem; font-weight: bold; color: #003366;">@ticket.DisplayNumber</div>
+                                            <div style="font-size: 1rem; color: #6c757d;">@ticket.ServiceType.Name</div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="color: #6c757d; font-size: 1.1rem;">Không có vé chờ</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .display-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: white;
+        padding: 2rem 1rem;
+    }
+    
+    .display-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem 0;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .display-header h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+        color: #ffb81c;
+    }
+    
+    .display-header p {
+        font-size: 1.3rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0;
+    }
+    
+    .calling-section {
+        margin-bottom: 3rem;
+    }
+    
+    .calling-card {
+        background: linear-gradient(135deg, #0b63ff 0%, #4d9aff 100%);
+        border-radius: 12px;
+        padding: 3rem 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        position: relative;
+    }
+    
+    .calling-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .calling-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .calling-item {
+        text-align: center;
+    }
+    
+    .calling-number {
+        font-size: 5rem;
+        font-weight: 700;
+        color: #ffb81c;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .calling-counter {
+        font-size: 1.5rem;
+        margin-top: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+    
+    .calling-service {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 0.5rem;
+    }
+    
+    .no-calling {
+        font-size: 5rem;
+        color: rgba(255, 255, 255, 0.3);
+        margin: 2rem 0;
+    }
+    
+    .sound-toggle {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .sound-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: white;
+    }
+    
+    .waiting-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .waiting-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .waiting-header h3 {
+        margin: 0;
+        color: #1a1a1a;
+        font-size: 1.8rem;
+    }
+    
+    .waiting-stats {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: right;
+    }
+    
+    .waiting-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+    }
+    
+    .waiting-group {
+        padding: 1.5rem 0;
+    }
+    
+    .waiting-group-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .waiting-group-title::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 1.2rem;
+        border-radius: 2px;
+        background: #0b63ff;
+    }
+    
+    .waiting-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 1rem;
+    }
+    
+    .waiting-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.25rem 0.75rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+    
+    .waiting-card:hover {
+        border-color: #0b63ff;
+        box-shadow: 0 8px 20px rgba(11, 99, 255, 0.15);
+        transform: translateY(-3px);
+    }
+    
+    .waiting-card .number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0b63ff;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .waiting-card .service {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin: 0;
+        word-break: break-word;
+    }
+    
+    .assigned-card {
+        border-color: #ffb81c !important;
+    }
+    
+    .assigned-badge {
+        display: inline-block;
+        background: #ffb81c;
+        color: #1a1a1a;
+        padding: 0.35rem 0.65rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    
+    .empty-message {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem 1rem;
+        font-size: 1rem;
+    }
+    
+    .flash {
+        animation: flashAnim 0.9s ease-in-out;
+    }
+    
+    @@keyframes flashAnim {
+        0% {{ box-shadow: 0 0 0 rgba(255, 255, 255, 0); transform: scale(1); }}
+        30% {{ box-shadow: 0 0 60px rgba(255, 184, 28, 0.3); transform: scale(1.02); }}
+        100% {{ box-shadow: 0 0 0 rgba(255, 255, 255, 0); transform: scale(1); }}
+    }
+    
+    @@media (max-width: 768px) {
+        .waiting-columns {{
+            grid-template-columns: 1fr;
+        }}
+        
+        .calling-number {{
+            font-size: 3.5rem;
+        }}
+        
+        .display-header h1 {{
+            font-size: 2rem;
+        }}
+        
+        .calling-grid {{
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }}
+    }
+</style>
+
+@code {
+    [Parameter] public int? BranchId { get; set; }
+
+    private List<Branch>? Branches;
+    private Branch? SelectedBranch;
+    private List<Ticket> WaitingTickets = new();
+    private List<(Ticket Ticket, global::Shared.Models.Counter Counter)> CurrentCalls = new();
+    private HubConnection? hubConnection;
+    private bool SoundEnabled = true;
+    private List<Counter> Counters = new();
+    private Dictionary<int, List<Ticket>> ServingTicketsByCounter = new();
+    private Dictionary<int, List<Ticket>> WaitingTicketsByCounter = new();
+
+    private void ToggleSound()
+    {
+        SoundEnabled = !SoundEnabled;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Branches = await BranchService.GetAllBranchesAsync();
+        if (BranchId.HasValue)
+        {
+            SelectedBranch = await BranchService.GetBranchByIdAsync(BranchId.Value);
+            if (SelectedBranch != null)
+            {
+                Counters = await CounterService.GetCountersByBranchAsync(SelectedBranch.BranchId);
+                var servingTickets = await TicketService.GetServingTicketsAsync(SelectedBranch.BranchId);
+                var waitingTickets = await TicketService.GetWaitingTicketsAsync(SelectedBranch.BranchId);
+                ServingTicketsByCounter = Counters.ToDictionary(c => c.CounterId, c => servingTickets.Where(t => t.AssignedCounterId == c.CounterId).ToList());
+                WaitingTicketsByCounter = Counters.ToDictionary(c => c.CounterId, c => waitingTickets.Where(t => t.AssignedCounterId == c.CounterId).ToList());
+            }
+        }
+    }
+
+    private async Task SelectBranch(int branchId)
+    {
+        SelectedBranch = await BranchService.GetBranchByIdAsync(branchId);
+        if (SelectedBranch != null)
+        {
+            await LoadData();
+            await InitializeSignalR();
+            // Prevent redirect loop: only navigate if not already on the correct URL
+            var currentUri = Navigation.Uri;
+            var targetUri = Navigation.ToAbsoluteUri($"/display/{branchId}").ToString();
+            if (!string.Equals(currentUri, targetUri, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo($"/display/{branchId}", replace: true);
+            }
+        }
+    }
+
+    private async Task LoadData()
+    {
+        if (SelectedBranch == null) return;
+
+        WaitingTickets = await TicketService.GetWaitingTicketsAsync(SelectedBranch.BranchId);
+
+        // Get currently serving tickets for this branch
+        var servingTickets = await TicketService.GetServingTicketsAsync(SelectedBranch.BranchId);
+
+        CurrentCalls.Clear();
+        foreach (var ticket in servingTickets)
+        {
+            if (ticket.AssignedCounterId.HasValue)
+            {
+                // AssignedCounter navigation property should already be loaded, but fall back to service
+                var counter = ticket.AssignedCounter ?? await CounterService.GetCounterByIdAsync(ticket.AssignedCounterId.Value);
+                if (counter != null)
+                {
+                    CurrentCalls.Add((ticket, counter));
+                }
+            }
+        }
+    }
+
+    private async Task InitializeSignalR()
+    {
+        if (SelectedBranch == null) return;
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hub/ticket"))
+            // Enable automatic reconnect to improve resilience on transient network issues
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<Ticket>("ticketGenerated", async (ticket) =>
+        {
+            if (ticket.BranchId == SelectedBranch?.BranchId)
+            {
+                await LoadData();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketAssigned", async (ticket) =>
+        {
+            if (ticket.BranchId == SelectedBranch?.BranchId)
+            {
+                await LoadData();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketCalled", async (ticket) =>
+        {
+            if (ticket.BranchId == SelectedBranch?.BranchId)
+            {
+                await LoadData();
+                await InvokeAsync(StateHasChanged);
+
+                try
+                {
+                    if (SoundEnabled)
+                    {
+                        await JS.InvokeVoidAsync("playBeep");
+                    }
+                    await JS.InvokeVoidAsync("flashElement", "#callingArea");
+                }
+                catch (Exception jsEx)
+                {
+                    Logger.LogDebug(jsEx, "JS notify failed");
+                }
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketCompleted", async (ticket) =>
+        {
+            if (ticket.BranchId == SelectedBranch?.BranchId)
+            {
+                await LoadData();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<Ticket>("ticketSkipped", async (ticket) =>
+        {
+            if (ticket.BranchId == SelectedBranch?.BranchId)
+            {
+                await LoadData();
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        try
+        {
+            await hubConnection.StartAsync();
+            await hubConnection.SendAsync("JoinBranchGroup", SelectedBranch.BranchId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start SignalR hub connection for display branch {BranchId}", SelectedBranch.BranchId);
+        }
+
+        // Re-join group after automatic reconnect
+        hubConnection.Reconnected += async (connectionId) =>
+        {
+            try
+            {
+                await hubConnection.SendAsync("JoinBranchGroup", SelectedBranch.BranchId);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to re-join branch group after reconnect for branch {BranchId}", SelectedBranch.BranchId);
+            }
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            if (SelectedBranch != null)
+            {
+                await hubConnection.SendAsync("LeaveBranchGroup", SelectedBranch.BranchId);
+            }
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
+

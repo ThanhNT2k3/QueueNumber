@@ -1,0 +1,85 @@
+@page "/admin/branches/new"
+@page "/admin/branches/{BranchId:int}"
+
+@using global::Shared.Models
+@using Server.Services
+@inject IBranchService BranchService
+@inject NavigationManager Navigation
+@inject ILogger<BranchEdit> Logger
+
+<PageTitle>@(IsNew ? "Create Branch" : "Edit Branch")</PageTitle>
+
+<div class="container-fluid p-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>@(IsNew ? "Create New Branch" : "Edit Branch")</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@Branch" OnValidSubmit="@HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <InputText class="form-control" @bind-Value="Branch.Name" />
+                            <ValidationMessage For="@(() => Branch.Name)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <InputTextArea class="form-control" @bind-Value="Branch.Address" rows="3" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <InputText class="form-control" @bind-Value="Branch.Phone" />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">@(IsNew ? "Create" : "Save")</button>
+                            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? BranchId { get; set; }
+
+    private Branch Branch = new();
+    private bool IsNew => !BranchId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (BranchId.HasValue)
+        {
+            Branch = await BranchService.GetBranchByIdAsync(BranchId.Value) ?? new Branch();
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                await BranchService.CreateBranchAsync(Branch);
+            }
+            else
+            {
+                await BranchService.UpdateBranchAsync(Branch);
+            }
+            Navigation.NavigateTo("/admin/branches");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving branch");
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/admin/branches");
+    }
+}
+

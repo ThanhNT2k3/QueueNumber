@@ -1,0 +1,98 @@
+@page "/admin/branches"
+
+@using global::Shared.Models
+@using Server.Services
+@inject IBranchService BranchService
+@inject NavigationManager Navigation
+
+<PageTitle>Branch Management</PageTitle>
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Branch Management</h2>
+        <button class="btn btn-primary" @onclick="CreateNew">Create New Branch</button>
+    </div>
+
+    @if (BranchList == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (BranchList.Count == 0)
+    {
+        <div class="alert alert-info">
+            <p>No branches found. <a href="#" @onclick="CreateNew" @onclick:preventDefault>Create the first branch</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>Counters</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var branch in BranchList)
+                    {
+                        <tr>
+                            <td>@branch.BranchId</td>
+                            <td><strong>@branch.Name</strong></td>
+                            <td>@(branch.Address ?? "-")</td>
+                            <td>@(branch.Phone ?? "-")</td>
+                            <td>@branch.Counters.Count</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @onclick="() => Edit(branch.BranchId)">Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => Delete(branch.BranchId)" 
+                                        disabled="@(branch.Counters.Count > 0)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Branch>? BranchList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBranches();
+    }
+
+    private async Task LoadBranches()
+    {
+        BranchList = await BranchService.GetAllBranchesAsync();
+    }
+
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/admin/branches/new");
+    }
+
+    private void Edit(int branchId)
+    {
+        Navigation.NavigateTo($"/admin/branches/{branchId}");
+    }
+
+    private async Task Delete(int branchId)
+    {
+        var branch = BranchList?.FirstOrDefault(b => b.BranchId == branchId);
+        if (branch != null && branch.Counters.Count == 0)
+        {
+            var success = await BranchService.DeleteBranchAsync(branchId);
+            if (success)
+            {
+                await LoadBranches();
+            }
+        }
+    }
+}
+

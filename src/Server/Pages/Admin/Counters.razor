@@ -1,0 +1,111 @@
+@page "/admin/counters"
+
+@using global::Shared.Models
+@using Server.Services
+@inject ICounterService CounterService
+@inject IBranchService BranchService
+@inject NavigationManager Navigation
+
+<PageTitle>Counter Management</PageTitle>
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Counter Management</h2>
+        <button class="btn btn-primary" @onclick="CreateNew">Create New Counter</button>
+    </div>
+
+    @if (CounterList == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (CounterList.Count == 0)
+    {
+        <div class="alert alert-info">
+            <p>No counters found. <a href="#" @onclick="CreateNew" @onclick:preventDefault>Create the first counter</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Branch</th>
+                        <th>Status</th>
+                        <th>Supported Services</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var counter in CounterList)
+                    {
+                        <tr>
+                            <td>@counter.CounterId</td>
+                            <td><strong>@counter.Name</strong></td>
+                            <td>@counter.Branch.Name</td>
+                            <td>
+                                @if (counter.IsActive)
+                                {
+                                    <span class="badge @(counter.IsBusy ? "bg-danger" : "bg-success")">
+                                        @(counter.IsBusy ? "Busy" : "Available")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>@counter.SupportedServices.Count</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @onclick="() => Edit(counter.CounterId)">Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => Delete(counter.CounterId)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<global::Shared.Models.Counter>? CounterList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCounters();
+    }
+
+    private async Task LoadCounters()
+    {
+        var branches = await BranchService.GetAllBranchesAsync();
+        CounterList = new List<global::Shared.Models.Counter>();
+        foreach (var branch in branches)
+        {
+            var branchCounters = await CounterService.GetCountersByBranchAsync(branch.BranchId);
+            CounterList.AddRange(branchCounters);
+        }
+    }
+
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/admin/counters/new");
+    }
+
+    private void Edit(int counterId)
+    {
+        Navigation.NavigateTo($"/admin/counters/{counterId}");
+    }
+
+    private async Task Delete(int counterId)
+    {
+        var success = await CounterService.DeleteCounterAsync(counterId);
+        if (success)
+        {
+            await LoadCounters();
+        }
+    }
+}
+

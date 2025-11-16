@@ -1,0 +1,93 @@
+@page "/admin/servicetypes"
+
+@using global::Shared.Models
+@using Server.Services
+@inject IServiceTypeService ServiceTypeService
+@inject NavigationManager Navigation
+
+<PageTitle>Service Type Management</PageTitle>
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Service Type Management</h2>
+        <button class="btn btn-primary" @onclick="CreateNew">Create New Service Type</button>
+    </div>
+
+    @if (ServiceTypeList == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (ServiceTypeList.Count == 0)
+    {
+        <div class="alert alert-info">
+            <p>No service types found. <a href="#" @onclick="CreateNew" @onclick:preventDefault>Create the first service type</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Prefix</th>
+                        <th>Description</th>
+                        <th>Est. Minutes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var serviceType in ServiceTypeList)
+                    {
+                        <tr>
+                            <td>@serviceType.ServiceTypeId</td>
+                            <td><strong>@serviceType.Name</strong></td>
+                            <td><code>@serviceType.Prefix</code></td>
+                            <td>@(serviceType.Description ?? "-")</td>
+                            <td>@serviceType.EstimatedMinutes</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @onclick="() => Edit(serviceType.ServiceTypeId)">Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => Delete(serviceType.ServiceTypeId)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ServiceType>? ServiceTypeList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadServiceTypes();
+    }
+
+    private async Task LoadServiceTypes()
+    {
+        ServiceTypeList = await ServiceTypeService.GetAllServiceTypesAsync();
+    }
+
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/admin/servicetypes/new");
+    }
+
+    private void Edit(int serviceTypeId)
+    {
+        Navigation.NavigateTo($"/admin/servicetypes/{serviceTypeId}");
+    }
+
+    private async Task Delete(int serviceTypeId)
+    {
+        var success = await ServiceTypeService.DeleteServiceTypeAsync(serviceTypeId);
+        if (success)
+        {
+            await LoadServiceTypes();
+        }
+    }
+}
+

@@ -1,0 +1,456 @@
+@page "/kiosk"
+@page "/kiosk/{BranchId:int}"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using global::Shared.Models
+@using Server.Services
+@inject ITicketService TicketService
+@inject IBranchService BranchService
+@inject IServiceTypeService ServiceTypeService
+@inject ICounterService CounterService
+@inject NavigationManager Navigation
+@inject ILogger<Kiosk> Logger
+@inject IJSRuntime JS
+
+<PageTitle>Kiosk - Bấm số</PageTitle>
+
+<style>
+    .kiosk-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8edf3 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    .kiosk-card {
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        max-width: 620px;
+        width: 100%;
+        overflow: hidden;
+        border: 1px solid rgba(0, 51, 102, 0.08);
+    }
+    
+    .kiosk-header {
+        background: linear-gradient(135deg, #003366 0%, #004d99 100%);
+        color: white;
+        padding: 3rem 2.5rem;
+        text-align: center;
+        border-bottom: 4px solid #d4a574;
+    }
+    
+    .kiosk-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: 1px;
+        color: white;
+    }
+    
+    .kiosk-header p {
+        margin: 0.75rem 0 0 0;
+        font-size: 1.15rem;
+        opacity: 0.95;
+        font-weight: 500;
+    }
+    
+    .kiosk-body {
+        padding: 3rem 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: 0.5px;
+    }
+    
+    .branch-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .branch-btn {
+        background: white;
+        border: 2px solid #e0e8f0;
+        border-radius: 6px;
+        padding: 1.75rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    .branch-btn:hover {
+        border-color: #003366;
+        box-shadow: 0 8px 20px rgba(0, 51, 102, 0.12);
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #f5f7fa 0%, white 100%);
+    }
+    
+    .branch-btn h4 {
+        margin: 0 0 0.5rem 0;
+        color: #003366;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .branch-btn small {
+        color: #5a6c7d;
+        font-weight: 400;
+    }
+    
+    .service-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .service-btn {
+        background: white;
+        border: 2px solid #e0e8f0;
+        border-radius: 6px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    .service-btn:hover:not(:disabled) {
+        border-color: #004d99;
+        box-shadow: 0 8px 20px rgba(0, 51, 102, 0.12);
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #f5f7fa 0%, white 100%);
+    }
+    
+    .service-btn h5 {
+        margin: 0 0 0.5rem 0;
+        color: #003366;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .service-btn small {
+        color: #5a6c7d;
+        display: block;
+        font-weight: 400;
+    }
+    
+    .success-alert {
+        background: linear-gradient(135deg, #1ca878 0%, #158b64 100%);
+        color: white;
+        border-radius: 6px;
+        padding: 2.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        border-left: 5px solid #d4a574;
+    }
+    
+    .success-alert h3 {
+        color: white;
+        margin: 0 0 1.5rem 0;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.5rem;
+    }
+    
+    .ticket-number {
+        font-size: 4.5rem;
+        font-weight: 700;
+        color: #d4a574;
+        margin: 1.5rem 0;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: 2px;
+    }
+    
+    .ticket-details {
+        margin: 1.5rem 0;
+        font-size: 1.05rem;
+        line-height: 1.9;
+    }
+    
+    .ticket-details strong {
+        color: #d4a574;
+        font-weight: 700;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-kiosk {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-kiosk-primary {
+        background: linear-gradient(135deg, #003366 0%, #004d99 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+    }
+    
+    .btn-kiosk-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 51, 102, 0.35);
+    }
+    
+    .btn-kiosk-secondary {
+        background: white;
+        color: #003366;
+        border: 2px solid #003366;
+        box-shadow: 0 4px 12px rgba(0, 51, 102, 0.1);
+    }
+    
+    .btn-kiosk-secondary:hover:not(:disabled) {
+        background: #003366;
+        color: white;
+        box-shadow: 0 8px 24px rgba(0, 51, 102, 0.2);
+    }
+    
+    .loading-message {
+        text-align: center;
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+</style>
+
+<div class="kiosk-container">
+    <div class="kiosk-card">
+        <div class="kiosk-header">
+            <h1>🎫 Bốc Số</h1>
+            @if (SelectedBranch != null)
+            {
+                <p>@SelectedBranch.Name</p>
+            }
+        </div>
+        <div class="kiosk-body">
+            @if (SelectedBranch == null)
+            {
+                <h3 class="section-title">Chọn chi nhánh</h3>
+                @if (Branches == null)
+                {
+                    <p class="loading-message">Đang tải...</p>
+                }
+                else if (Branches.Count == 0)
+                {
+                    <p style="text-align: center; color: #e74c3c;">Không có chi nhánh nào. Vui lòng liên hệ quản trị viên.</p>
+                }
+                else
+                {
+                    <div class="branch-list">
+                        @foreach (var branch in Branches)
+                        {
+                            <button class="branch-btn" @onclick="() => SelectBranch(branch.BranchId)">
+                                <h4>@branch.Name</h4>
+                                @if (!string.IsNullOrEmpty(branch.Address))
+                                {
+                                    <small>@branch.Address</small>
+                                }
+                            </button>
+                        }
+                    </div>
+                }
+            }
+            else if (ServiceTypes == null || ServiceTypes.Count == 0)
+            {
+                <p class="loading-message">Đang tải loại dịch vụ...</p>
+            }
+            else if (CurrentTicket != null)
+            {
+                <div class="success-alert">
+                    <h3>✓ Bạn đã bốc số thành công!</h3>
+                    <div class="ticket-number">@CurrentTicket.DisplayNumber</div>
+                    <div class="ticket-details">
+                        <div>Loại dịch vụ: <strong>@CurrentTicket.ServiceType.Name</strong></div>
+                        <div>Thời gian: <strong>@CurrentTicket.CreatedAt.ToString("HH:mm:ss")</strong></div>
+                        @if (CurrentTicket.AssignedCounter != null)
+                        {
+                            <div>Quầy: <strong>@CurrentTicket.AssignedCounter.Name</strong></div>
+                        }
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-kiosk btn-kiosk-primary" @onclick="Reset">Bấm số mới</button>
+                    <button class="btn-kiosk btn-kiosk-secondary" @onclick="Reprint">In lại vé</button>
+                </div>
+            }
+            else
+            {
+                <h3 class="section-title">Chọn loại dịch vụ</h3>
+                <div class="service-grid">
+                    @foreach (var serviceType in ServiceTypes)
+                    {
+                        <button class="service-btn" 
+                                @onclick="() => CreateTicket(serviceType.ServiceTypeId)"
+                                disabled="@isCreating">
+                            <h5>@serviceType.Name</h5>
+                            @if (!string.IsNullOrEmpty(serviceType.Description))
+                            {
+                                <small>@serviceType.Description</small>
+                            }
+                        </button>
+                    }
+                </div>
+                <div class="button-group">
+                    <button class="btn-kiosk btn-kiosk-secondary" @onclick="Reset">← Chọn lại chi nhánh</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? BranchId { get; set; }
+
+    private List<Branch>? Branches;
+    private Branch? SelectedBranch;
+    private List<ServiceType>? ServiceTypes;
+    private Ticket? CurrentTicket;
+    private bool isCreating = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Branches = await BranchService.GetAllBranchesAsync();
+        
+        if (BranchId.HasValue)
+        {
+            await SelectBranch(BranchId.Value);
+        }
+    }
+
+    private async Task SelectBranch(int branchId)
+    {
+        SelectedBranch = await BranchService.GetBranchByIdAsync(branchId);
+        if (SelectedBranch != null)
+        {
+            ServiceTypes = await ServiceTypeService.GetServiceTypesByBranchAsync(branchId);
+            Navigation.NavigateTo($"/kiosk/{branchId}", replace: true);
+        }
+    }
+
+    private async Task CreateTicket(int serviceTypeId)
+    {
+        if (SelectedBranch == null || isCreating) return;
+
+        isCreating = true;
+        try
+        {
+            var ticket = await TicketService.CreateTicketAsync(SelectedBranch.BranchId, serviceTypeId);
+            
+            // Auto-assign to counter
+            await CounterService.AssignTicketToCounterAsync(
+                ticket.TicketId, 
+                SelectedBranch.BranchId, 
+                serviceTypeId);
+            
+            // Reload ticket with navigation properties
+            CurrentTicket = await TicketService.GetTicketByIdAsync(ticket.TicketId);
+            
+            // Trigger server-side silent print; fall back to client print if server print fails
+            try
+            {
+                // Use HttpClient to call server print API (the runtime provides HttpClient in Blazor Server)
+                var client = new HttpClient { BaseAddress = new Uri(Navigation.BaseUri) };
+                var resp = await client.PostAsync($"api/print/ticket/{ticket.TicketId}", null);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    // fallback to client print popup
+                    var html = BuildPrintableHtml(CurrentTicket);
+                    await JS.InvokeVoidAsync("openAndPrint", html);
+                }
+            }
+            catch (Exception jex)
+            {
+                Logger.LogWarning(jex, "Server-side print failed, falling back to client print for {TicketId}", ticket.TicketId);
+                try
+                {
+                    var html = BuildPrintableHtml(CurrentTicket);
+                    await JS.InvokeVoidAsync("openAndPrint", html);
+                }
+                catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating ticket");
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private string BuildPrintableHtml(Ticket? ticket)
+    {
+        if (ticket == null) return string.Empty;
+
+        // Small printable template with inline CSS to ensure consistent printing
+        var head = "<meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
+                   "<style>body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#222} .ticket{width:320px;margin:0 auto;text-align:center;} .number{font-size:48px;font-weight:700;color:#1a73e8;margin:10px 0;} .muted{color:#666;font-size:14px;margin:6px 0;} .badge{display:inline-block;padding:6px 10px;background:#f0ad4e;color:#fff;border-radius:6px;margin-top:10px}</style>";
+
+        var body =
+            "<div class='ticket'>" +
+            $"<h2>{EscapeHtml(ticket.Branch?.Name ?? "Chi nhánh")}</h2>" +
+            "<div class='muted'>Mã vé</div>" +
+            $"<div class='number'>{EscapeHtml(ticket.DisplayNumber)}</div>" +
+            $"<div class='muted'>Loại dịch vụ: {EscapeHtml(ticket.ServiceType?.Name ?? "-")}</div>" +
+            $"<div class='muted'>Thời gian: {ticket.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}</div>" +
+            (ticket.AssignedCounter != null ? $"<div class='muted'>Quầy: {EscapeHtml(ticket.AssignedCounter.Name)}</div>" : string.Empty) +
+            "<div class='badge'>Vui lòng chờ - Hệ thống</div>" +
+            "</div>";
+
+        return $"<html><head>{head}</head><body>{body}</body></html>";
+    }
+
+    private static string EscapeHtml(string? input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        return System.Net.WebUtility.HtmlEncode(input);
+    }
+
+    private void Reset()
+    {
+        CurrentTicket = null;
+        SelectedBranch = null;
+        ServiceTypes = null;
+        Navigation.NavigateTo("/kiosk", replace: true);
+    }
+
+    private async Task Reprint()
+    {
+        if (CurrentTicket == null) return;
+        try
+        {
+            var client = new HttpClient { BaseAddress = new Uri(Navigation.BaseUri) };
+            var resp = await client.PostAsync($"api/print/ticket/{CurrentTicket.TicketId}", null);
+            if (!resp.IsSuccessStatusCode)
+            {
+                // fallback to client print popup
+                var html = BuildPrintableHtml(CurrentTicket);
+                await JS.InvokeVoidAsync("openAndPrint", html);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Reprint failed for {TicketId}", CurrentTicket.TicketId);
+        }
+    }
+}
+

@@ -1,0 +1,286 @@
+@page "/admin"
+@page "/admin/dashboard"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using global::Shared.Models
+@using Server.Services
+@inject ITicketService TicketService
+@inject IBranchService BranchService
+@inject ICounterService CounterService
+@inject NavigationManager Navigation
+@inject ILogger<Dashboard> Logger
+@implements IAsyncDisposable
+
+<PageTitle>Admin Dashboard</PageTitle>
+
+<div class="container-fluid p-4">
+    <h2 class="mb-4">Dashboard</h2>
+
+    @if (Stats == null)
+    {
+        <p>Loading statistics...</p>
+    }
+    else
+    {
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Tickets Today</h5>
+                        <h2 class="mb-0">@Stats.TotalTicketsToday</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Waiting</h5>
+                        <h2 class="mb-0">@Stats.WaitingTickets</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Serving</h5>
+                        <h2 class="mb-0">@Stats.ServingTickets</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Completed Today</h5>
+                        <h2 class="mb-0">@Stats.CompletedTicketsToday</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Branch Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (BranchStats == null)
+                        {
+                            <p>Loading...</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Branch</th>
+                                            <th>Waiting</th>
+                                            <th>Serving</th>
+                                            <th>Today</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var stat in BranchStats)
+                                        {
+                                            <tr>
+                                                <td>@stat.BranchName</td>
+                                                <td>@stat.Waiting</td>
+                                                <td>@stat.Serving</td>
+                                                <td>@stat.Today</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Counter Status</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (CounterStats == null)
+                        {
+                            <p>Loading...</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Counter</th>
+                                            <th>Branch</th>
+                                            <th>Status</th>
+                                            <th>Active</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var stat in CounterStats)
+                                        {
+                                            <tr>
+                                                <td>@stat.CounterName</td>
+                                                <td>@stat.BranchName</td>
+                                                <td>
+                                                    <span class="badge @(stat.IsBusy ? "bg-danger" : "bg-success")">
+                                                        @(stat.IsBusy ? "Busy" : "Available")
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @(stat.IsActive ? "bg-success" : "bg-secondary")">
+                                                        @(stat.IsActive ? "Active" : "Inactive")
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DashboardStats? Stats;
+    private List<BranchStat>? BranchStats;
+    private List<CounterStat>? CounterStats;
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatistics();
+        await InitializeSignalR();
+    }
+
+    private async Task LoadStatistics()
+    {
+        var branches = await BranchService.GetAllBranchesAsync();
+        var today = DateTime.UtcNow.Date;
+
+        var allTickets = new List<Ticket>();
+        var branchStatsList = new List<BranchStat>();
+        var counterStatsList = new List<CounterStat>();
+
+        int totalTicketsToday = 0;
+        int completedTicketsToday = 0;
+        foreach (var branch in branches)
+        {
+            var waitingTickets = await TicketService.GetWaitingTicketsAsync(branch.BranchId);
+            var serving = waitingTickets.Count(t => t.Status == TicketStatus.Serving);
+            var waiting = waitingTickets.Count(t => t.Status == TicketStatus.Waiting);
+
+            var todayCount = await TicketService.GetTicketsCreatedTodayAsync(branch.BranchId, today);
+            var completedTodayCount = await TicketService.GetTicketsCompletedTodayAsync(branch.BranchId, today);
+
+            branchStatsList.Add(new BranchStat
+            {
+                BranchName = branch.Name,
+                Waiting = waiting,
+                Serving = serving,
+                Today = todayCount
+            });
+
+            var counters = await CounterService.GetCountersByBranchAsync(branch.BranchId);
+            foreach (var counter in counters)
+            {
+                counterStatsList.Add(new CounterStat
+                {
+                    CounterName = counter.Name,
+                    BranchName = branch.Name,
+                    IsBusy = counter.IsBusy,
+                    IsActive = counter.IsActive
+                });
+            }
+
+            totalTicketsToday += todayCount;
+            completedTicketsToday += completedTodayCount;
+            allTickets.AddRange(waitingTickets);
+        }
+
+        Stats = new DashboardStats
+        {
+            TotalTicketsToday = totalTicketsToday,
+            WaitingTickets = allTickets.Count(t => t.Status == TicketStatus.Waiting),
+            ServingTickets = allTickets.Count(t => t.Status == TicketStatus.Serving),
+            CompletedTicketsToday = completedTicketsToday
+        };
+
+        BranchStats = branchStatsList;
+        CounterStats = counterStatsList;
+    }
+
+    private async Task InitializeSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hub/ticket"))
+            .Build();
+
+        hubConnection.On<Ticket>("ticketGenerated", async (_) =>
+        {
+            await LoadStatistics();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<Ticket>("ticketAssigned", async (_) =>
+        {
+            await LoadStatistics();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<Ticket>("ticketCalled", async (_) =>
+        {
+            await LoadStatistics();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<Ticket>("ticketCompleted", async (_) =>
+        {
+            await LoadStatistics();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    private class DashboardStats
+    {
+        public int TotalTicketsToday { get; set; }
+        public int WaitingTickets { get; set; }
+        public int ServingTickets { get; set; }
+        public int CompletedTicketsToday { get; set; }
+    }
+
+    private class BranchStat
+    {
+        public string BranchName { get; set; } = string.Empty;
+        public int Waiting { get; set; }
+        public int Serving { get; set; }
+        public int Today { get; set; }
+    }
+
+    private class CounterStat
+    {
+        public string CounterName { get; set; } = string.Empty;
+        public string BranchName { get; set; } = string.Empty;
+        public bool IsBusy { get; set; }
+        public bool IsActive { get; set; }
+    }
+}
+
