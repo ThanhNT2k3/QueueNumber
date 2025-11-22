@@ -1,0 +1,11 @@
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/bin/Debug/net6.0/BankNext.QMS.Core.deps.json
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/bin/Debug/net6.0/BankNext.QMS.Core.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/bin/Debug/net6.0/BankNext.QMS.Core.pdb
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/BankNext.QMS.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/BankNext.QMS.Core.AssemblyInfoInputs.cache
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/BankNext.QMS.Core.AssemblyInfo.cs
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/BankNext.QMS.Core.csproj.CoreCompileInputs.cache
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/BankNext.QMS.Core.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/refint/BankNext.QMS.Core.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/BankNext.QMS.Core.pdb
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/Debug/net6.0/ref/BankNext.QMS.Core.dll

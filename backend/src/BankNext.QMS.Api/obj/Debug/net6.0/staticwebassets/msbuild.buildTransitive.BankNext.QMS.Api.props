@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../buildMultiTargeting/BankNext.QMS.Api.props" />
+</Project>

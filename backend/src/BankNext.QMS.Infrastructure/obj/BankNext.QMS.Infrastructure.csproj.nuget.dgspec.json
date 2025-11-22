@@ -1,0 +1,229 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/BankNext.QMS.Infrastructure.csproj": {}
+  },
+  "projects": {
+    "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Application/BankNext.QMS.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Application/BankNext.QMS.Application.csproj",
+        "projectName": "BankNext.QMS.Application",
+        "projectPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Application/BankNext.QMS.Application.csproj",
+        "packagesPath": "/Users/thanhnguyen/.nuget/packages/",
+        "outputPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Application/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/thanhnguyen/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj": {
+                "projectPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[6.0.32, 6.0.32]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[6.0.32, 6.0.32]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.303/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj",
+        "projectName": "BankNext.QMS.Core",
+        "projectPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj",
+        "packagesPath": "/Users/thanhnguyen/.nuget/packages/",
+        "outputPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/thanhnguyen/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[6.0.32, 6.0.32]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[6.0.32, 6.0.32]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.303/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/BankNext.QMS.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/BankNext.QMS.Infrastructure.csproj",
+        "projectName": "BankNext.QMS.Infrastructure",
+        "projectPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/BankNext.QMS.Infrastructure.csproj",
+        "packagesPath": "/Users/thanhnguyen/.nuget/packages/",
+        "outputPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/thanhnguyen/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Application/BankNext.QMS.Application.csproj": {
+                "projectPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Application/BankNext.QMS.Application.csproj"
+              },
+              "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj": {
+                "projectPath": "/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Core/BankNext.QMS.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore.Sqlite": {
+              "target": "Package",
+              "version": "[6.0.25, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[6.0.32, 6.0.32]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[6.0.32, 6.0.32]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.303/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

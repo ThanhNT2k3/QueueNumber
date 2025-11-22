@@ -1,0 +1,8 @@
+{
+  "name": "BankNext QMS",
+  "description": "An enterprise-grade Banking Queue Management System featuring Kiosk, Counter, Main Display, and AI-driven Analytics interfaces.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

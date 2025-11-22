@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DF36EC89-E513-43A6-9B33-E42560ED75CA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankNext.QMS.Api", "src\BankNext.QMS.Api\BankNext.QMS.Api.csproj", "{28FB09F3-8AC8-46B5-97D7-910F9B026A00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankNext.QMS.Core", "src\BankNext.QMS.Core\BankNext.QMS.Core.csproj", "{65AF7EE3-3B45-4918-B20C-01B1FCF7D03B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankNext.QMS.Infrastructure", "src\BankNext.QMS.Infrastructure\BankNext.QMS.Infrastructure.csproj", "{29F53724-4D9E-411D-A539-A0C791C7BD28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankNext.QMS.Application", "src\BankNext.QMS.Application\BankNext.QMS.Application.csproj", "{474658AF-28AA-4B71-8564-846A0D10AD87}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{28FB09F3-8AC8-46B5-97D7-910F9B026A00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28FB09F3-8AC8-46B5-97D7-910F9B026A00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28FB09F3-8AC8-46B5-97D7-910F9B026A00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28FB09F3-8AC8-46B5-97D7-910F9B026A00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65AF7EE3-3B45-4918-B20C-01B1FCF7D03B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65AF7EE3-3B45-4918-B20C-01B1FCF7D03B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65AF7EE3-3B45-4918-B20C-01B1FCF7D03B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65AF7EE3-3B45-4918-B20C-01B1FCF7D03B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29F53724-4D9E-411D-A539-A0C791C7BD28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29F53724-4D9E-411D-A539-A0C791C7BD28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29F53724-4D9E-411D-A539-A0C791C7BD28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29F53724-4D9E-411D-A539-A0C791C7BD28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{474658AF-28AA-4B71-8564-846A0D10AD87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{474658AF-28AA-4B71-8564-846A0D10AD87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{474658AF-28AA-4B71-8564-846A0D10AD87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{474658AF-28AA-4B71-8564-846A0D10AD87}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{28FB09F3-8AC8-46B5-97D7-910F9B026A00} = {DF36EC89-E513-43A6-9B33-E42560ED75CA}
+		{65AF7EE3-3B45-4918-B20C-01B1FCF7D03B} = {DF36EC89-E513-43A6-9B33-E42560ED75CA}
+		{29F53724-4D9E-411D-A539-A0C791C7BD28} = {DF36EC89-E513-43A6-9B33-E42560ED75CA}
+		{474658AF-28AA-4B71-8564-846A0D10AD87} = {DF36EC89-E513-43A6-9B33-E42560ED75CA}
+	EndGlobalSection
+EndGlobal
