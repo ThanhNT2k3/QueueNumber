@@ -250,9 +250,9 @@ export const AdminPanel: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y">
                                     {[
-                                        { name: 'Admin User', email: 'admin@banknext.com', role: 'ADMIN', status: 'active' },
-                                        { name: 'Teller User', email: 'teller@banknext.com', role: 'TELLER', status: 'active' },
-                                        { name: 'Manager User', email: 'manager@banknext.com', role: 'MANAGER', status: 'active' },
+                                        { name: 'Admin User', email: 'admin@sc.com', role: 'ADMIN', status: 'active' },
+                                        { name: 'Teller User', email: 'teller@sc.com', role: 'TELLER', status: 'active' },
+                                        { name: 'Manager User', email: 'manager@sc.com', role: 'MANAGER', status: 'active' },
                                     ].map((staff, idx) => (
                                         <tr key={idx} className="hover:bg-gray-50">
                                             <td className="px-6 py-4">

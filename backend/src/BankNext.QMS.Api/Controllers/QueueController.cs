@@ -55,14 +55,15 @@ public class QueueController : ControllerBase
             CustomerName = request.CustomerName,
             CustomerSegment = request.CustomerSegment,
             CustomerId = request.CustomerId,
-            RecallCount = 0
+            RecallCount = 0,
+            BranchId = request.BranchId
         };
 
         _context.Tickets.Add(ticket);
         await _context.SaveChangesAsync();
 
         // 4. Find Best Counter (Smart Assignment)
-        var bestCounter = await FindBestCounter(request.ServiceType);
+        var bestCounter = await FindBestCounter(request.ServiceType, request.BranchId);
 
         string? assignedCounterName = null;
         int? queuePosition = null;
@@ -95,12 +96,13 @@ public class QueueController : ControllerBase
         });
     }
 
-    private async Task<Counter?> FindBestCounter(ServiceType serviceType)
+    private async Task<Counter?> FindBestCounter(ServiceType serviceType, string? branchId)
     {
         // Get all online counters that can handle this service
         var allCounters = await _context.Counters.ToListAsync();
         var eligibleCounters = allCounters
             .Where(c => c.Status == CounterStatus.ONLINE)
+            .Where(c => string.IsNullOrEmpty(branchId) || c.BranchId == branchId) // Filter by Branch
             .Where(c => c.ServiceTags.Split(',').Any(tag => tag == serviceType.ToString()))
             .ToList();
 
@@ -129,6 +131,76 @@ public class QueueController : ControllerBase
 
         return counterLoads.FirstOrDefault()?.Counter;
     }
+
+    // POST: api/queue/tickets/{id}/move-to-end
+    [HttpPost("tickets/{id}/move-to-end")]
+    public async Task<IActionResult> MoveToEnd(Guid id, [FromBody] MoveToEndRequest request)
+    {
+        var ticket = await _context.Tickets.FindAsync(id);
+        if (ticket == null) return NotFound();
+
+        if (ticket.Status != TicketStatus.WAITING && ticket.Status != TicketStatus.CALLED)
+        {
+            return BadRequest(new { message = "Only waiting or called tickets can be moved to end" });
+        }
+
+        // Reset ticket to waiting and update priority to move to end
+        ticket.Status = TicketStatus.WAITING;
+        ticket.CounterId = null;
+        ticket.CalledTime = null;
+        ticket.MovedToEndCount++;
+        ticket.LastMovedToEndTime = DateTimeOffset.UtcNow;
+        
+        // Add remark about moving to end
+        var moveRemark = $"[{DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm}] Moved to end - {request.Reason}";
+        ticket.Remarks = string.IsNullOrEmpty(ticket.Remarks) 
+            ? moveRemark 
+            : $"{ticket.Remarks}\n{moveRemark}";
+
+        // Decrease priority significantly to move to end
+        ticket.PriorityScore = Math.Max(0, ticket.PriorityScore - 1000);
+
+        await _context.SaveChangesAsync();
+        await _hubContext.Clients.All.SendAsync("TicketUpdated", ticket);
+
+        return Ok(ticket);
+    }
+
+    // PATCH: api/queue/tickets/{id}/remarks
+    [HttpPatch("tickets/{id}/remarks")]
+    public async Task<IActionResult> UpdateRemarks(Guid id, [FromBody] UpdateRemarksRequest request)
+    {
+        var ticket = await _context.Tickets.FindAsync(id);
+        if (ticket == null) return NotFound();
+
+        var newRemark = $"[{DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm}] {request.Remark}";
+        ticket.Remarks = string.IsNullOrEmpty(ticket.Remarks) 
+            ? newRemark 
+            : $"{ticket.Remarks}\n{newRemark}";
+
+        await _context.SaveChangesAsync();
+        await _hubContext.Clients.All.SendAsync("TicketUpdated", ticket);
+
+        return Ok(ticket);
+    }
+
+    // PATCH: api/queue/tickets/{id}/customer-info
+    [HttpPatch("tickets/{id}/customer-info")]
+    public async Task<IActionResult> UpdateCustomerInfo(Guid id, [FromBody] UpdateCustomerInfoRequest request)
+    {
+        var ticket = await _context.Tickets.FindAsync(id);
+        if (ticket == null) return NotFound();
+
+        // Update customer contact information
+        ticket.CustomerPhone = request.Phone;
+        ticket.CustomerEmail = request.Email;
+        ticket.CustomerNote = request.Note;
+
+        await _context.SaveChangesAsync();
+        await _hubContext.Clients.All.SendAsync("TicketUpdated", ticket);
+
+        return Ok(ticket);
+    }
 }
 
 public class AutoAssignRequest
@@ -137,6 +209,7 @@ public class AutoAssignRequest
     public string? CustomerName { get; set; }
     public CustomerSegment CustomerSegment { get; set; }
     public string? CustomerId { get; set; }
+    public string? BranchId { get; set; }
 }
 
 public class AutoAssignResult
@@ -145,4 +218,21 @@ public class AutoAssignResult
     public string? SuggestedCounter { get; set; }
     public int? EstimatedQueuePosition { get; set; }
     public int? EstimatedWaitTimeMinutes { get; set; }
+}
+
+public class MoveToEndRequest
+{
+    public string Reason { get; set; } = "Customer not present";
+}
+
+public class UpdateRemarksRequest
+{
+    public string Remark { get; set; } = string.Empty;
+}
+
+public class UpdateCustomerInfoRequest
+{
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Note { get; set; }
 }

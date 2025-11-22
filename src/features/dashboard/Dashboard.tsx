@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useQMS } from '../../stores/QMSContext';
-import { analyzeQueueTrends } from '../../lib/services/geminiService';
+import { useAuth } from '../../stores/AuthContext';
 import * as Icons from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { tickets, counters } = useQMS();
+  const { user } = useAuth();
   const [aiAnalysis, setAiAnalysis] = useState<string>("Loading AI Analysis...");
+
+  // Filter tickets based on User Role (Manager sees only their branch)
+  const isManager = user?.role === 'MANAGER';
+  const userBranchId = user?.branchId;
+
+  const displayTickets = (isManager && userBranchId)
+    ? tickets.filter(t => t.branchId === userBranchId)
+    : tickets;
 
   // Simulated Data Calculation
   const data = [
@@ -25,26 +34,24 @@ export const Dashboard: React.FC = () => {
   }));
 
   // Calculate CSAT from actual tickets
-  const ratedTickets = tickets.filter(t => t.feedbackRating !== undefined);
+  const ratedTickets = displayTickets.filter(t => t.feedbackRating !== undefined);
   const avgRating = ratedTickets.length > 0
     ? (ratedTickets.reduce((acc, t) => acc + (t.feedbackRating || 0), 0) / ratedTickets.length).toFixed(1)
     : "N/A";
-
-  useEffect(() => {
-    // Simulate asking Gemini for an executive summary
-    const timeout = setTimeout(async () => {
-      const summary = await analyzeQueueTrends({ volume: data, staff: performanceData, csat: avgRating });
-      setAiAnalysis(summary);
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, []); // Run once on mount
 
   return (
     <div className="h-full bg-gray-50 p-8 overflow-y-auto">
       <div className="flex justify-between items-end mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Live Analytics Dashboard</h1>
-          <p className="text-gray-500">Branch Overview • Today</p>
+          <div className="flex items-center gap-2 text-gray-500">
+            <span>Overview • Today</span>
+            {isManager && userBranchId && (
+              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold border border-blue-200">
+                Branch: {userBranchId}
+              </span>
+            )}
+          </div>
         </div>
         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -59,7 +66,7 @@ export const Dashboard: React.FC = () => {
             <h3 className="text-gray-500 font-medium">Total Tickets</h3>
             <Icons.Ticket className="text-blue-500 bg-blue-50 p-1 rounded" size={28} />
           </div>
-          <p className="text-3xl font-bold text-gray-800">{tickets.length}</p>
+          <p className="text-3xl font-bold text-gray-800">{displayTickets.length}</p>
           <p className="text-green-500 text-sm mt-2">↑ 12% vs yesterday</p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -83,7 +90,7 @@ export const Dashboard: React.FC = () => {
             <h3 className="text-gray-500 font-medium">VIP Customers</h3>
             <Icons.Crown className="text-purple-500 bg-purple-50 p-1 rounded" size={28} />
           </div>
-          <p className="text-3xl font-bold text-gray-800">{tickets.filter(t => t.serviceType === 'VIP').length}</p>
+          <p className="text-3xl font-bold text-gray-800">{displayTickets.filter(t => t.serviceType === 4).length}</p>
         </div>
       </div>
 
@@ -102,22 +109,6 @@ export const Dashboard: React.FC = () => {
               <Line type="monotone" dataKey="waiting" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* AI Insights Panel */}
-        <div className="col-span-1 bg-gradient-to-b from-gray-900 to-gray-800 text-white p-6 rounded-2xl shadow-lg flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <Icons.Sparkles className="text-yellow-400" />
-            <h3 className="font-bold text-lg">AI Manager Insights</h3>
-          </div>
-          <div className="bg-white/10 p-4 rounded-xl flex-1 overflow-y-auto">
-            <p className="leading-relaxed opacity-90 text-sm font-light">
-              {aiAnalysis}
-            </p>
-          </div>
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <p className="text-xs text-gray-400">Powered by Gemini 2.5 Flash</p>
-          </div>
         </div>
       </div>
 

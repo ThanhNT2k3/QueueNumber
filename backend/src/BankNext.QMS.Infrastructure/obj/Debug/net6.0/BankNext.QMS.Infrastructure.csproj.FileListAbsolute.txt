@@ -15,3 +15,4 @@
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/obj/Debug/net6.0/ref/BankNext.QMS.Infrastructure.dll
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/bin/Debug/net6.0/BankNext.QMS.Application.dll
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/bin/Debug/net6.0/BankNext.QMS.Application.pdb
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Infrastructure/obj/Debug/net6.0/BankNext.QMS.Infrastructure.sourcelink.json

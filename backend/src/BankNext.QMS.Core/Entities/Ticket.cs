@@ -28,4 +28,16 @@ public class Ticket
     public int? FeedbackRating { get; set; }
     public string? FeedbackComment { get; set; }
     public string? FeedbackTags { get; set; }
+    
+    public string? BranchId { get; set; }
+    
+    // Audit and Queue Management
+    public string? Remarks { get; set; }
+    public int MovedToEndCount { get; set; } = 0;
+    public DateTimeOffset? LastMovedToEndTime { get; set; }
+    
+    // Customer Contact Information
+    public string? CustomerPhone { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? CustomerNote { get; set; }
 }

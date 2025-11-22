@@ -18,7 +18,14 @@ export const LoginPage: React.FC = () => {
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/kiosk'); // Or dashboard, or based on role
+            // If user is already authenticated, redirect them to their role-based home
+            // But we need to be careful not to loop if they are manually visiting /login to switch accounts
+            // For now, let's just redirect to dashboard or counter if they are already logged in
+            if (isAuthenticated) {
+                // We can check role here if needed, but App.tsx handles protection.
+                // If we are on /login and authenticated, go to default.
+                navigate('/');
+            }
         }
     }, [isAuthenticated, navigate]);
 
@@ -37,9 +44,9 @@ export const LoginPage: React.FC = () => {
     };
 
     const demoAccounts = [
-        { email: 'admin@banknext.com', role: 'Admin', color: 'bg-blue-500' },
-        { email: 'teller@banknext.com', role: 'Teller', color: 'bg-green-500' },
-        { email: 'manager@banknext.com', role: 'Manager', color: 'bg-purple-500' }
+        { email: 'admin@sc.com', role: 'Admin', color: 'bg-blue-500' },
+        { email: 'teller@sc.com', role: 'Teller', color: 'bg-green-500' },
+        { email: 'manager@sc.com', role: 'Manager', color: 'bg-purple-500' }
     ];
 
     return (

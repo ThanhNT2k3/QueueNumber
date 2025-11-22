@@ -98,3 +98,4 @@
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/obj/Debug/net6.0/ref/BankNext.QMS.Api.dll
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/BankNext.QMS.Application.dll
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/BankNext.QMS.Application.pdb
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/obj/Debug/net6.0/BankNext.QMS.Api.sourcelink.json

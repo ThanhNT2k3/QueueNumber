@@ -7,11 +7,13 @@ import { UserMenu } from './components/ui/UserMenu';
 import { Kiosk } from './features/queue/Kiosk';
 import { MainDisplay } from './features/queue/MainDisplay';
 import { FeedbackTerminal } from './features/queue/FeedbackTerminal';
-import { CounterTerminal } from './features/counter/CounterTerminal';
+import CounterTerminal from './features/counter/CounterTerminal';
 import { CounterDisplay } from './features/counter/CounterDisplay';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { UserManagement } from './features/admin/UserManagement';
+import { BranchManagement } from './features/admin/BranchManagement';
 import { CategoryManagement } from './features/admin/CategoryManagement';
+import { Reports } from './features/reports/Reports';
 import * as Icons from 'lucide-react';
 
 const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, roles?: string[] }) => {
@@ -34,6 +36,10 @@ const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, rol
   }
 
   if (roles && user && !roles.includes(user.role)) {
+    // Redirect to a safe default based on role
+    if (user.role === 'TELLER') return <Navigate to="/counter" replace />;
+    if (user.role === 'MANAGER') return <Navigate to="/dashboard" replace />;
+    if (user.role === 'ADMIN') return <Navigate to="/dashboard" replace />;
     return <Navigate to="/" replace />;
   }
 
@@ -41,11 +47,15 @@ const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, rol
 };
 
 const App: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // Hide nav on specific routes if needed (e.g., Display, Login)
-  const hideNav = location.pathname === '/display' || location.pathname === '/counter-display' || location.pathname === '/login';
+  // Hide nav on specific routes (Kiosk, Displays, Login)
+  const hideNav = location.pathname === '/kiosk' ||
+    location.pathname === '/display' ||
+    location.pathname === '/counter-display' ||
+    location.pathname === '/login' ||
+    location.pathname === '/feedback';
 
   return (
     <div className="h-screen flex flex-col">
@@ -58,43 +68,67 @@ const App: React.FC = () => {
               <Icons.Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">BankNext QMS</h1>
+              <h1 className="text-lg font-bold text-gray-900">Standard Chartered QMS</h1>
               <p className="text-xs text-gray-500">Queue Management System</p>
             </div>
           </div>
 
-          {/* View Switcher */}
+          {/* View Switcher - Role Based */}
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-2xl">
-            <NavLink to="/kiosk" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-              <Icons.TabletSmartphone size={14} /> <span className="hidden md:inline">KIOSK</span>
-            </NavLink>
-            <NavLink to="/display" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-              <Icons.Tv size={14} /> <span className="hidden md:inline">DISPLAY</span>
-            </NavLink>
-            <NavLink to="/counter" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-              <Icons.MonitorSpeaker size={14} /> <span className="hidden md:inline">COUNTER</span>
-            </NavLink>
-            <NavLink to="/counter-display" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-              <Icons.Monitor size={14} /> <span className="hidden md:inline">COUNTER_DISP</span>
-            </NavLink>
-            <NavLink to="/feedback" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-              <Icons.Smile size={14} /> <span className="hidden md:inline">FEEDBACK</span>
-            </NavLink>
-            <NavLink to="/dashboard" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-              <Icons.BarChart3 size={14} /> <span className="hidden md:inline">DASHBOARD</span>
-            </NavLink>
 
-            {/* Admin Only Views */}
+            {/* ADMIN & MANAGER: Dashboard */}
+            {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+              <NavLink to="/dashboard" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                <Icons.BarChart3 size={14} /> <span className="hidden md:inline">DASHBOARD</span>
+              </NavLink>
+            )}
+
+            {/* MANAGER: Reports */}
+            {user?.role === 'MANAGER' && (
+              <NavLink to="/reports" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                <Icons.FileBarChart size={14} /> <span className="hidden md:inline">REPORTS</span>
+              </NavLink>
+            )}
+
+            {/* ADMIN: Users, Branches & Categories */}
             {user?.role === 'ADMIN' && (
               <>
                 <NavLink to="/users" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
                   <Icons.Users size={14} /> <span className="hidden md:inline">USERS</span>
+                </NavLink>
+                <NavLink to="/branches" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                  <Icons.Building2 size={14} /> <span className="hidden md:inline">BRANCHES</span>
                 </NavLink>
                 <NavLink to="/categories" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
                   <Icons.Tags size={14} /> <span className="hidden md:inline">CATEGORIES</span>
                 </NavLink>
               </>
             )}
+
+            {/* TELLER: Counter Terminal & Counter Display */}
+            {user?.role === 'TELLER' && (
+              <>
+                <NavLink to="/counter" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                  <Icons.MonitorSpeaker size={14} /> <span className="hidden md:inline">COUNTER</span>
+                </NavLink>
+                <NavLink to="/counter-display" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                  <Icons.Monitor size={14} /> <span className="hidden md:inline">COUNTER DISPLAY</span>
+                </NavLink>
+              </>
+            )}
+
+            {/* Common Display Link (Visible to all except maybe purely back-office, keeping for now) */}
+            <NavLink to="/display" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+              <Icons.Tv size={14} /> <span className="hidden md:inline">MAIN DISPLAY</span>
+            </NavLink>
+
+            {/* Kiosk Link - Hide for TELLER as requested */}
+            {user?.role !== 'TELLER' && (
+              <NavLink to="/kiosk" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                <Icons.TabletSmartphone size={14} /> <span className="hidden md:inline">KIOSK (DEMO)</span>
+              </NavLink>
+            )}
+
           </div>
 
           {/* User Menu */}
@@ -107,7 +141,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Public Routes (or semi-public) */}
+          {/* Public / Standalone Routes */}
           <Route path="/kiosk" element={<Kiosk />} />
           <Route path="/display" element={<MainDisplay />} />
           <Route path="/counter-display" element={<CounterDisplay />} />
@@ -115,25 +149,41 @@ const App: React.FC = () => {
 
           {/* Protected Routes */}
           <Route path="/counter" element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['TELLER']}>
               <CounterTerminal />
             </ProtectedRoute>
           } />
+
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
               <Dashboard />
             </ProtectedRoute>
           } />
+
+          <Route path="/reports" element={
+            <ProtectedRoute roles={['MANAGER']}>
+              <Reports />
+            </ProtectedRoute>
+          } />
+
           <Route path="/users" element={
             <ProtectedRoute roles={['ADMIN']}>
               <UserManagement />
             </ProtectedRoute>
           } />
+
+          <Route path="/branches" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <BranchManagement />
+            </ProtectedRoute>
+          } />
+
           <Route path="/categories" element={
             <ProtectedRoute roles={['ADMIN']}>
               <CategoryManagement />
             </ProtectedRoute>
           } />
+
           <Route path="/profile" element={
             <ProtectedRoute>
               <UserProfile />
@@ -141,7 +191,7 @@ const App: React.FC = () => {
           } />
 
           {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/kiosk" replace />} />
+          <Route path="/" element={<Navigate to={isAuthenticated ? (user?.role === 'TELLER' ? '/counter' : '/dashboard') : '/login'} replace />} />
         </Routes>
       </main>
     </div>

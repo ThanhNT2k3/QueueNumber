@@ -29,3 +29,10 @@ export const COLORS = {
     ERROR: '#EF4444',
     INFO: '#06B6D4',
 } as const;
+
+export const BRANCHES = [
+    { id: 'HQ', name: 'Headquarters (Hội sở chính)', address: '123 Bank Street, Dist 1' },
+    { id: 'B01', name: 'Saigon Centre Branch', address: '65 Le Loi, Dist 1' },
+    { id: 'B02', name: 'Landmark 81 Branch', address: '208 Nguyen Huu Canh, Binh Thanh' },
+    { id: 'B03', name: 'Thu Duc Branch', address: '1 Vo Van Ngan, Thu Duc' },
+];

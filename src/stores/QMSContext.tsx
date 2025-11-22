@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { Counter, Ticket, TicketStatus, ServiceType, CustomerSegment, Customer } from '../types/types';
-import { SERVICES } from '../constants';
 
 const API_URL = 'http://localhost:5257/api';
 const HUB_URL = 'http://localhost:5257/qmsHub';
@@ -10,7 +9,7 @@ const HUB_URL = 'http://localhost:5257/qmsHub';
 interface QMSContextType {
   tickets: Ticket[];
   counters: Counter[];
-  createTicket: (serviceType: ServiceType, customer?: Customer) => Promise<Ticket | null>;
+  createTicket: (serviceType: ServiceType, customer?: Customer, branchId?: string) => Promise<Ticket | null>;
   checkInBooking: (bookingCode: string) => Promise<boolean>;
   callNextTicket: (counterId: string) => Promise<void>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
@@ -19,6 +18,9 @@ interface QMSContextType {
   toggleCounterStatus: (counterId: string) => Promise<void>;
   getWaitingCount: (serviceType: ServiceType) => number;
   submitFeedback: (ticketId: string, rating: number, comment?: string, tags?: string[]) => Promise<void>;
+  moveToEnd: (ticketId: string, reason: string) => Promise<void>;
+  updateRemarks: (ticketId: string, remark: string) => Promise<void>;
+  updateCustomerInfo: (ticketId: string, phone?: string, email?: string, note?: string) => Promise<void>;
 }
 
 const QMSContext = createContext<QMSContextType | undefined>(undefined);
@@ -75,6 +77,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               .split(',')
               .map((s: string) => ServiceType[s as keyof typeof ServiceType] as ServiceType)
             : [],
+          branchId: c.branchId,
           status: c.status === 0 ? 'ONLINE' : c.status === 1 ? 'OFFLINE' : 'PAUSED'
         })));
       } catch (err) {
@@ -131,7 +134,8 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 serviceTags: counter.serviceTags && typeof counter.serviceTags === 'string'
                   ? counter.serviceTags.split(',').map((s: string) => ServiceType[s as keyof typeof ServiceType] as ServiceType)
                   : counter.serviceTags || [],
-                status: counter.status === 0 ? 'ONLINE' : counter.status === 1 ? 'OFFLINE' : 'PAUSED'
+                status: counter.status === 0 ? 'ONLINE' : counter.status === 1 ? 'OFFLINE' : 'PAUSED',
+                branchId: counter.branchId
               };
 
               if (exists) {
@@ -153,7 +157,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.speechSynthesis.speak(utterance);
   };
 
-  const createTicket = useCallback(async (serviceType: ServiceType, customer?: Customer): Promise<Ticket | null> => {
+  const createTicket = useCallback(async (serviceType: ServiceType, customer?: Customer, branchId?: string): Promise<Ticket | null> => {
     try {
       const response = await fetch(`${API_URL}/queue/auto-assign`, {
         method: 'POST',
@@ -162,7 +166,8 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           serviceType,
           customerName: customer?.name,
           customerSegment: customer?.segment || CustomerSegment.REGULAR,
-          customerId: customer?.id
+          customerId: customer?.id,
+          branchId
         })
       });
 
@@ -218,6 +223,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const eligibleTickets = tickets.filter(t =>
       t.status === TicketStatus.WAITING &&
+      (!t.branchId || !counter.branchId || t.branchId === counter.branchId) && // Match Branch
       (counter.serviceTags.includes(t.serviceType) || counter.serviceTags.includes(ServiceType.VIP))
     );
 
@@ -292,8 +298,44 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     console.warn("Feedback not implemented in backend yet");
   }, []);
 
+  const moveToEnd = useCallback(async (ticketId: string, reason: string) => {
+    try {
+      await fetch(`${API_URL}/queue/tickets/${ticketId}/move-to-end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
+      });
+    } catch (error) {
+      console.error('Failed to move ticket to end:', error);
+    }
+  }, []);
+
+  const updateRemarks = useCallback(async (ticketId: string, remark: string) => {
+    try {
+      await fetch(`${API_URL}/queue/tickets/${ticketId}/remarks`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remark })
+      });
+    } catch (error) {
+      console.error('Failed to update remarks:', error);
+    }
+  }, []);
+
+  const updateCustomerInfo = useCallback(async (ticketId: string, phone?: string, email?: string, note?: string) => {
+    try {
+      await fetch(`${API_URL}/queue/tickets/${ticketId}/customer-info`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, email, note })
+      });
+    } catch (error) {
+      console.error('Failed to update customer info:', error);
+    }
+  }, []);
+
   return (
-    <QMSContext.Provider value={{ tickets, counters, createTicket, checkInBooking, callNextTicket, updateTicketStatus, transferTicket, recallTicket, toggleCounterStatus, getWaitingCount, submitFeedback }}>
+    <QMSContext.Provider value={{ tickets, counters, createTicket, checkInBooking, callNextTicket, updateTicketStatus, transferTicket, recallTicket, toggleCounterStatus, getWaitingCount, submitFeedback, moveToEnd, updateRemarks, updateCustomerInfo }}>
       {children}
     </QMSContext.Provider>
   );

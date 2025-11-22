@@ -7,6 +7,7 @@ interface User {
     role: 'ADMIN' | 'TELLER' | 'MANAGER';
     avatar?: string;
     assignedCounterId?: string;
+    branchId?: string;
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
+    updateAssignedCounter: (counterId: string) => void;
     isLoading: boolean;
 }
 
@@ -59,7 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     email: data.username, // Map backend Username to frontend email
                     role: data.role,
                     avatar: data.avatarUrl,
-                    assignedCounterId: data.assignedCounterId
+                    assignedCounterId: data.assignedCounterId,
+                    branchId: data.branchId
                 };
                 setUser(mappedUser);
                 localStorage.setItem('qms_user', JSON.stringify(mappedUser));
@@ -79,8 +82,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('qms_user');
     };
 
+    const updateAssignedCounter = (counterId: string) => {
+        if (user) {
+            const updatedUser = { ...user, assignedCounterId: counterId };
+            setUser(updatedUser);
+            localStorage.setItem('qms_user', JSON.stringify(updatedUser));
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, updateAssignedCounter, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

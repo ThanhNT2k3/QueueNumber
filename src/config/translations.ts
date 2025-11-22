@@ -1,18 +1,18 @@
 export const translations = {
     en: {
         login: {
-            title: "BankNext QMS",
-            subtitle: "Queue Management System",
+            title: "Standard Chartered QMS",
+            subtitle: "Next Gen Branch Experience",
             welcome: "Welcome Back",
             emailLabel: "Email Address",
             passwordLabel: "Password",
             signInButton: "Sign In",
             signingIn: "Signing in...",
-            demoAccounts: "Demo Accounts (Password: password)",
-            footer: "© 2025 BankNext. All rights reserved.",
+            demoAccounts: "Demo Accounts (Click to fill):",
+            footer: "© 2025 Standard Chartered. All rights reserved.",
             error: "Invalid email or password",
-            emailPlaceholder: "you@banknext.com",
-            passwordPlaceholder: "••••••••"
+            emailPlaceholder: "you@sc.com",
+            passwordPlaceholder: "Enter your password"
         },
         menu: {
             profile: "Profile",
@@ -38,18 +38,18 @@ export const translations = {
     },
     vi: {
         login: {
-            title: "BankNext QMS",
-            subtitle: "Hệ thống quản lý hàng đợi",
+            title: "Standard Chartered QMS",
+            subtitle: "Trải nghiệm chi nhánh thế hệ mới",
             welcome: "Chào mừng trở lại",
             emailLabel: "Địa chỉ Email",
             passwordLabel: "Mật khẩu",
             signInButton: "Đăng nhập",
             signingIn: "Đang đăng nhập...",
-            demoAccounts: "Tài khoản Demo (Mật khẩu: password)",
-            footer: "© 2025 BankNext. Bảo lưu mọi quyền.",
+            demoAccounts: "Tài khoản Demo (Nhấn để điền):",
+            footer: "© 2025 Standard Chartered. Bảo lưu mọi quyền.",
             error: "Email hoặc mật khẩu không đúng",
-            emailPlaceholder: "email@banknext.com",
-            passwordPlaceholder: "••••••••"
+            emailPlaceholder: "email@sc.com",
+            passwordPlaceholder: "Nhập mật khẩu của bạn"
         },
         menu: {
             profile: "Hồ sơ cá nhân",

@@ -5,15 +5,23 @@ import { SERVICES } from '../../config/service-definitions';
 import { ServiceType } from '../../types/types';
 import * as Icons from 'lucide-react';
 
+import { BRANCHES } from '../../config/constants';
+
 export const Kiosk: React.FC = () => {
   const { createTicket, tickets } = useQMS();
-  const [step, setStep] = useState<'WELCOME' | 'SERVICE' | 'PRINTING'>('WELCOME');
+  const [step, setStep] = useState<'BRANCH_SELECTION' | 'WELCOME' | 'SERVICE' | 'PRINTING'>('BRANCH_SELECTION');
   const [language, setLanguage] = useState<'EN' | 'VN'>('EN');
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [createdTicketNumber, setCreatedTicketNumber] = useState<string | null>(null);
   const [suggestedCounter, setSuggestedCounter] = useState<string | null>(null);
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [waitTime, setWaitTime] = useState<number | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+
+  const handleBranchSelect = (branchId: string) => {
+    setSelectedBranch(branchId);
+    setStep('WELCOME');
+  };
 
   const handleStart = (lang: 'EN' | 'VN') => {
     setLanguage(lang);
@@ -25,7 +33,7 @@ export const Kiosk: React.FC = () => {
     setStep('PRINTING');
 
     // Create ticket and get the response directly
-    const createdTicket = await createTicket(serviceId);
+    const createdTicket = await createTicket(serviceId, undefined, selectedBranch || undefined);
 
     if (createdTicket) {
       setCreatedTicketNumber(createdTicket.number);
@@ -68,8 +76,10 @@ export const Kiosk: React.FC = () => {
             <Icons.Building2 size={28} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">BankNext</h1>
-            <p className="text-xs text-brand-600 font-semibold tracking-wide uppercase">Smart Branch</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Standard Chartered</h1>
+            <p className="text-xs text-brand-600 font-semibold tracking-wide uppercase">
+              {selectedBranch ? BRANCHES.find(b => b.id === selectedBranch)?.name : 'Smart Branch'}
+            </p>
           </div>
         </div>
         <div className="text-right">
@@ -80,13 +90,46 @@ export const Kiosk: React.FC = () => {
       {/* Main Content */}
       <main className="relative z-10 flex-1 flex flex-col p-8">
 
+        {/* BRANCH SELECTION SCREEN */}
+        {step === 'BRANCH_SELECTION' && (
+          <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
+            <h2 className="text-4xl font-bold text-gray-900 mb-2">Select Branch</h2>
+            <p className="text-gray-500 mb-12">Please select your current location</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+              {BRANCHES.map(branch => (
+                <button
+                  key={branch.id}
+                  onClick={() => handleBranchSelect(branch.id)}
+                  className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-brand-500 transition-all text-left group"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-600">{branch.name}</h3>
+                    <Icons.ChevronRight className="text-gray-300 group-hover:text-brand-600" />
+                  </div>
+                  <p className="text-gray-500 text-sm flex items-center gap-2">
+                    <Icons.MapPin size={14} /> {branch.address}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* WELCOME SCREEN (Language Selection) */}
         {step === 'WELCOME' && (
           <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
 
+            <button
+              onClick={() => setStep('BRANCH_SELECTION')}
+              className="absolute top-0 left-0 flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm"
+            >
+              <Icons.ArrowLeft size={16} /> Change Branch
+            </button>
+
             <div className="flex-1 flex flex-col items-center justify-center text-center max-w-4xl w-full">
               <h2 className="text-6xl font-bold text-gray-900 mb-6 tracking-tight leading-tight">
-                Welcome to BankNext
+                Welcome to Standard Chartered
               </h2>
               <p className="text-2xl text-gray-500 font-light mb-16">
                 Please select your language to begin
@@ -125,7 +168,7 @@ export const Kiosk: React.FC = () => {
 
             {/* Decorative Footer */}
             <div className="py-6 text-gray-300 text-sm font-medium tracking-widest uppercase">
-              BankNext Smart Queue System v2.0
+              Standard Chartered Smart Queue System v2.0
             </div>
           </div>
         )}

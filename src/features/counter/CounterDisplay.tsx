@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useQMS } from '../../stores/QMSContext';
+import { useAuth } from '../../stores/AuthContext';
 import { TicketStatus } from '../../types/types';
 import { useSearchParams } from 'react-router-dom';
 import * as Icons from 'lucide-react';
@@ -10,10 +11,12 @@ export const CounterDisplay: React.FC = () => {
     const [searchParams] = useSearchParams();
     const counterIdFromUrl = searchParams.get('counter');
 
-    // Auto-select counter from URL or localStorage or first available counter
+    const { user } = useAuth();
+
+    // Auto-select counter from URL or localStorage or User's assigned counter or first available counter
     const [selectedCounterId, setSelectedCounterId] = useState<string | null>(() => {
         const stored = localStorage.getItem('display_counter_id');
-        return counterIdFromUrl || stored || null;
+        return counterIdFromUrl || user?.assignedCounterId || stored || null;
     });
 
     const [animateNumber, setAnimateNumber] = useState(false);
@@ -21,14 +24,27 @@ export const CounterDisplay: React.FC = () => {
     const counter = counters.find(c => c.id === selectedCounterId);
     const currentTicket = tickets.find(t => t.id === counter?.currentTicketId);
 
-    // Auto-select first counter if none selected and counters are available
+    // Auto-select counter logic
     useEffect(() => {
-        if (!selectedCounterId && counters.length > 0) {
-            const firstCounter = counters[0];
-            setSelectedCounterId(firstCounter.id);
-            localStorage.setItem('display_counter_id', firstCounter.id);
+        if (!selectedCounterId) {
+            if (user?.assignedCounterId) {
+                setSelectedCounterId(user.assignedCounterId);
+                localStorage.setItem('display_counter_id', user.assignedCounterId);
+            } else if (counters.length > 0) {
+                // If no user assigned counter, pick the first one from the same branch if possible
+                const branchCounters = user?.branchId
+                    ? counters.filter(c => c.branchId === user.branchId)
+                    : counters;
+
+                const firstCounter = branchCounters.length > 0 ? branchCounters[0] : counters[0];
+
+                if (firstCounter) {
+                    setSelectedCounterId(firstCounter.id);
+                    localStorage.setItem('display_counter_id', firstCounter.id);
+                }
+            }
         }
-    }, [counters, selectedCounterId]);
+    }, [counters, selectedCounterId, user]);
 
     // Update from URL parameter
     useEffect(() => {
@@ -121,7 +137,7 @@ export const CounterDisplay: React.FC = () => {
                         <Icons.Building2 className="w-6 h-6 text-brand-600" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900">BankNext</h1>
+                        <h1 className="text-xl font-bold text-gray-900">Standard Chartered</h1>
                         <p className="text-brand-600 font-medium tracking-wide uppercase text-[10px]">Customer Display</p>
                     </div>
                 </div>
@@ -207,7 +223,7 @@ export const CounterDisplay: React.FC = () => {
                     {/* Footer Info (Left Side) */}
                     <div className="absolute bottom-6 flex items-center gap-2 text-gray-400 text-sm">
                         <Icons.ShieldCheck size={16} />
-                        <span>BankNext Secure Transaction Environment</span>
+                        <span>Standard Chartered Secure Transaction Environment</span>
                     </div>
                 </div>
 

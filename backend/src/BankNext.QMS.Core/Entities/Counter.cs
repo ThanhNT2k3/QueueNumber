@@ -12,6 +12,7 @@ public class Counter
     
     public Guid? CurrentTicketId { get; set; }
     public Guid? AssignedUserId { get; set; }
+    public string? BranchId { get; set; }
     
     // Storing as a comma-separated string for SQLite simplicity, or we can use a value converter
     public string ServiceTags { get; set; } = string.Empty; 

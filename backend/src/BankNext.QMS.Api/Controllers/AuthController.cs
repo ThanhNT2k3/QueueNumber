@@ -75,7 +75,7 @@ public class AuthController : ControllerBase
         // 2. Seed if not exists (for demo purposes)
         if (user == null)
         {
-            if (request.Username == "admin@banknext.com" && request.Password == "password")
+            if (request.Username == "admin@sc.com" && request.Password == "password")
             {
                 user = new BankNext.QMS.Core.Entities.User
                 {
@@ -83,12 +83,13 @@ public class AuthController : ControllerBase
                     Username = request.Username,
                     FullName = "Admin User",
                     Role = "ADMIN",
-                    AvatarUrl = "https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff"
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff",
+                    BranchId = "HQ"
                 };
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
             }
-            else if (request.Username == "teller@banknext.com" && request.Password == "password")
+            else if (request.Username == "teller@sc.com" && request.Password == "password")
             {
                 user = new BankNext.QMS.Core.Entities.User
                 {
@@ -96,7 +97,8 @@ public class AuthController : ControllerBase
                     Username = request.Username,
                     FullName = "Teller User",
                     Role = "TELLER",
-                    AvatarUrl = "https://ui-avatars.com/api/?name=Teller+User&background=059669&color=fff"
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Teller+User&background=059669&color=fff",
+                    BranchId = "B01"
                 };
                 
                 // Auto-assign to the first counter for demo purposes
@@ -109,7 +111,7 @@ public class AuthController : ControllerBase
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
             }
-             else if (request.Username == "manager@banknext.com" && request.Password == "password")
+             else if (request.Username == "manager@sc.com" && request.Password == "password")
             {
                 user = new BankNext.QMS.Core.Entities.User
                 {
@@ -117,7 +119,8 @@ public class AuthController : ControllerBase
                     Username = request.Username,
                     FullName = "Manager User",
                     Role = "MANAGER",
-                    AvatarUrl = "https://ui-avatars.com/api/?name=Manager+User&background=7C3AED&color=fff"
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Manager+User&background=7C3AED&color=fff",
+                    BranchId = "B01"
                 };
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
@@ -144,7 +147,8 @@ public class AuthController : ControllerBase
             user.FullName, 
             user.Role, 
             user.AvatarUrl,
-            AssignedCounterId = counter?.Id 
+            AssignedCounterId = counter?.Id,
+            user.BranchId
         });
     }
 }

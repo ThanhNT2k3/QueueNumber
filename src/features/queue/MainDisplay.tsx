@@ -31,8 +31,8 @@ export const MainDisplay: React.FC = () => {
 
     return (
       <div className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${isMostRecent
-          ? 'bg-brand-600 text-white shadow-xl scale-100 border-4 border-white/20'
-          : 'bg-white text-gray-800 shadow-md border border-gray-100'
+        ? 'bg-brand-600 text-white shadow-xl scale-100 border-4 border-white/20'
+        : 'bg-white text-gray-800 shadow-md border border-gray-100'
         } p-6 flex items-center justify-between animate-slide-in-right`}
       >
         {isMostRecent && (
@@ -73,7 +73,7 @@ export const MainDisplay: React.FC = () => {
             <Icons.Building2 className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">BankNext</h1>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Standard Chartered</h1>
             <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Main Branch</p>
           </div>
         </div>
@@ -145,8 +145,8 @@ export const MainDisplay: React.FC = () => {
 
               return (
                 <div key={counter.id} className={`p-4 rounded-xl border shadow-sm transition-all ${currentTicket
-                    ? 'bg-white border-brand-200 shadow-brand-100/50'
-                    : 'bg-gray-50 border-gray-100'
+                  ? 'bg-white border-brand-200 shadow-brand-100/50'
+                  : 'bg-gray-50 border-gray-100'
                   }`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-gray-700 uppercase tracking-wider text-sm">{counter.name}</span>

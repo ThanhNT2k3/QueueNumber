@@ -49,6 +49,11 @@ export interface Ticket {
   queuePosition?: number;
   estimatedWaitTime?: number;
   isBooking?: boolean;
+  branchId?: string;
+  remarks?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerNote?: string;
 }
 
 export interface Counter {
@@ -58,6 +63,7 @@ export interface Counter {
   currentTicketId: string | null;
   lastServedTicketId?: string | null;
   serviceTags: ServiceType[];
+  branchId?: string;
 }
 
 export interface ServiceDefinition {
@@ -74,4 +80,5 @@ export interface User {
   role: 'ADMIN' | 'TELLER' | 'MANAGER';
   avatarUrl?: string;
   assignedCounterId?: string;
+  branchId?: string;
 }
