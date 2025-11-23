@@ -99,3 +99,13 @@
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/BankNext.QMS.Application.dll
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/BankNext.QMS.Application.pdb
 /Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/obj/Debug/net6.0/BankNext.QMS.Api.sourcelink.json
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/Google.Apis.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/Google.Apis.Auth.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/Google.Apis.Core.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/Microsoft.Identity.Client.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/Microsoft.IdentityModel.Abstractions.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/Newtonsoft.Json.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/System.CodeDom.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/System.Formats.Asn1.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/System.Management.dll
+/Users/thanhnguyen/Downloads/banknext-qms/backend/src/BankNext.QMS.Api/bin/Debug/net6.0/runtimes/win/lib/net6.0/System.Management.dll

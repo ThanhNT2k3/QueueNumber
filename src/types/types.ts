@@ -78,8 +78,10 @@ export interface User {
   id: string;
   username: string;
   fullName: string;
+  email?: string; // For Google SSO
   role: 'ADMIN' | 'TELLER' | 'MANAGER';
-  avatarUrl?: string;
+  avatar?: string;
+  avatarUrl?: string; // Keep both for backward compatibility
   assignedCounterId?: string;
   branchId?: string;
 }

@@ -1,20 +1,21 @@
 import React from 'react';
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from './stores/AuthContext';
-import { LoginPage } from './features/auth/LoginPage';
-import { UserProfile } from './features/auth/UserProfile';
+import { LoginPage, UserProfile } from './features/authentication';
 import { UserMenu } from './components/ui/UserMenu';
-import { Kiosk } from './features/queue/Kiosk';
-import { MainDisplay } from './features/queue/MainDisplay';
-import { FeedbackTerminal } from './features/queue/FeedbackTerminal';
-import CounterTerminal from './features/counter/CounterTerminal';
-import { CounterDisplay } from './features/counter/CounterDisplay';
-import { Dashboard } from './features/dashboard/Dashboard';
-import { UserManagement } from './features/admin/UserManagement';
-import { BranchManagement } from './features/admin/BranchManagement';
-import { CategoryManagement } from './features/admin/CategoryManagement';
-import { Reports } from './features/reports/Reports';
-import { CounterManagement } from './features/manager/CounterManagement';
+import { KioskPage } from './features/ticketing';
+import { MainDisplay } from './features/queue-display';
+import { FeedbackTerminal } from './features/customer-feedback';
+import { CounterTerminalPage, CounterDisplay } from './features/counter-operations';
+import {
+  DashboardPage,
+  UserManagementPage,
+  BranchManagementPage,
+  ServiceManagementPage,
+  CounterManagementPage,
+  ReportsPage
+} from './features/administration';
+import { CounterAssignmentAuditPage } from './features/administration/audit/CounterAssignmentAuditPage';
 import * as Icons from 'lucide-react';
 
 const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, roles?: string[] }) => {
@@ -108,6 +109,9 @@ const App: React.FC = () => {
                 <NavLink to="/categories" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
                   <Icons.Tags size={14} /> <span className="hidden md:inline">CATEGORIES</span>
                 </NavLink>
+                <NavLink to="/audit" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                  <Icons.History size={14} /> <span className="hidden md:inline">AUDIT</span>
+                </NavLink>
               </>
             )}
 
@@ -148,7 +152,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
 
           {/* Public / Standalone Routes */}
-          <Route path="/kiosk" element={<Kiosk />} />
+          <Route path="/kiosk" element={<KioskPage />} />
           <Route path="/display" element={<MainDisplay />} />
           <Route path="/counter-display" element={<CounterDisplay />} />
           <Route path="/feedback" element={<FeedbackTerminal />} />
@@ -156,43 +160,47 @@ const App: React.FC = () => {
           {/* Protected Routes */}
           <Route path="/counter" element={
             <ProtectedRoute roles={['TELLER']}>
-              <CounterTerminal />
+              <CounterTerminalPage />
             </ProtectedRoute>
           } />
 
           <Route path="/dashboard" element={
             <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-              <Dashboard />
+              <DashboardPage />
             </ProtectedRoute>
           } />
 
+          {/* Manager Routes */}
           <Route path="/reports" element={
-            <ProtectedRoute roles={['MANAGER']}>
-              <Reports />
+            <ProtectedRoute roles={['MANAGER', 'ADMIN']}>
+              <ReportsPage />
             </ProtectedRoute>
           } />
-
           <Route path="/manager/counters" element={
-            <ProtectedRoute roles={['MANAGER']}>
-              <CounterManagement />
+            <ProtectedRoute roles={['MANAGER', 'ADMIN']}>
+              <CounterManagementPage />
             </ProtectedRoute>
           } />
 
+          {/* Admin Routes */}
           <Route path="/users" element={
             <ProtectedRoute roles={['ADMIN']}>
-              <UserManagement />
+              <UserManagementPage />
             </ProtectedRoute>
           } />
-
           <Route path="/branches" element={
             <ProtectedRoute roles={['ADMIN']}>
-              <BranchManagement />
+              <BranchManagementPage />
             </ProtectedRoute>
           } />
-
           <Route path="/categories" element={
             <ProtectedRoute roles={['ADMIN']}>
-              <CategoryManagement />
+              <ServiceManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/audit" element={
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+              <CounterAssignmentAuditPage />
             </ProtectedRoute>
           } />
 

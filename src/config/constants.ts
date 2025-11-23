@@ -1,5 +1,8 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5257/api';
 export const SIGNALR_HUB_URL = import.meta.env.VITE_SIGNALR_URL || 'http://localhost:5257/qmsHub';
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+export const MICROSOFT_CLIENT_ID = import.meta.env.VITE_MICROSOFT_CLIENT_ID || '';
+export const MICROSOFT_TENANT_ID = import.meta.env.VITE_MICROSOFT_TENANT_ID || 'common';
 
 export const ROUTES = {
     HOME: '/',
@@ -30,6 +33,10 @@ export const COLORS = {
     INFO: '#06B6D4',
 } as const;
 
+/**
+ * @deprecated Use useBranches() hook instead to load branches from API
+ * This is kept as fallback data only
+ */
 export const BRANCHES = [
     { id: 'HQ', name: 'Headquarters (Hội sở chính)', address: '123 Bank Street, Dist 1' },
     { id: 'B01', name: 'Saigon Centre Branch', address: '65 Le Loi, Dist 1' },

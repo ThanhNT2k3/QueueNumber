@@ -1,10 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import * as signalR from '@microsoft/signalr';
 import { Counter, Ticket, TicketStatus, ServiceType, CustomerSegment, Customer } from '../types/types';
-
-const API_URL = 'http://localhost:5257/api';
-const HUB_URL = 'http://localhost:5257/qmsHub';
+import { API_BASE_URL, SIGNALR_HUB_URL } from '../config/constants';
 
 interface QMSContextType {
   tickets: Ticket[];
@@ -34,7 +32,7 @@ export const useQMS = () => {
 export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [counters, setCounters] = useState<Counter[]>([]);
-  const [connection, setConnection] = useState<HubConnection | null>(null);
+  const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
 
   // Helper to convert Backend Ticket to Frontend Ticket
   const mapTicket = (t: any): Ticket => ({
@@ -48,10 +46,10 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching data from:', API_URL);
+        console.log('Fetching data from:', API_BASE_URL);
         const [ticketsRes, countersRes] = await Promise.all([
-          fetch(`${API_URL}/tickets`),
-          fetch(`${API_URL}/counters`)
+          fetch(`${API_BASE_URL}/tickets`),
+          fetch(`${API_BASE_URL}/counters`)
         ]);
 
         console.log('Tickets response status:', ticketsRes.status);
@@ -82,7 +80,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         })));
       } catch (err) {
         console.error("Failed to fetch initial data", err);
-        alert(`Failed to connect to backend: ${err}. Please check if backend is running on ${API_URL}`);
+        alert(`Failed to connect to backend: ${err}. Please check if backend is running on ${API_BASE_URL}`);
       }
     };
 
@@ -91,8 +89,8 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // SignalR Setup
   useEffect(() => {
-    const newConnection = new HubConnectionBuilder()
-      .withUrl(HUB_URL)
+    const newConnection = new signalR.HubConnectionBuilder()
+      .withUrl(SIGNALR_HUB_URL)
       .withAutomaticReconnect()
       .build();
 
@@ -159,7 +157,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const createTicket = useCallback(async (serviceType: ServiceType, customer?: Customer, branchId?: string): Promise<Ticket | null> => {
     try {
-      const response = await fetch(`${API_URL}/queue/auto-assign`, {
+      const response = await fetch(`${API_BASE_URL}/queue/auto-assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -234,7 +232,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return a.createdTime - b.createdTime;
     })[0];
 
-    await fetch(`${API_URL}/tickets/${nextTicket.id}/call`, {
+    await fetch(`${API_BASE_URL}/tickets/${nextTicket.id}/call`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ counterId })
@@ -244,7 +242,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateTicketStatus = useCallback(async (ticketId: string, status: TicketStatus) => {
     if (status === TicketStatus.COMPLETED) {
-      await fetch(`${API_URL}/tickets/${ticketId}/complete`, { method: 'POST' });
+      await fetch(`${API_BASE_URL}/tickets/${ticketId}/complete`, { method: 'POST' });
     } else {
       // Implement other status updates if backend supports them
       // For now only Complete is fully implemented in backend controller shown
@@ -253,7 +251,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const recallTicket = useCallback(async (ticketId: string) => {
     // Replay voice announcement for the ticket
-    await fetch(`${API_URL}/tickets/${ticketId}/recall`, {
+    await fetch(`${API_BASE_URL}/tickets/${ticketId}/recall`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -261,7 +259,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const transferTicket = useCallback(async (ticketId: string, targetService: ServiceType) => {
     // Change the service type of the ticket and reset its status to WAITING
-    await fetch(`${API_URL}/tickets/${ticketId}/transfer`, {
+    await fetch(`${API_BASE_URL}/tickets/${ticketId}/transfer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetService }),
@@ -282,7 +280,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (counter.status === 'ONLINE') targetStatus = 2; // PAUSED
     else targetStatus = 0; // ONLINE
 
-    await fetch(`${API_URL}/counters/${counterId}/status`, {
+    await fetch(`${API_BASE_URL}/counters/${counterId}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: targetStatus })
@@ -300,7 +298,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const moveToEnd = useCallback(async (ticketId: string, reason: string) => {
     try {
-      await fetch(`${API_URL}/queue/tickets/${ticketId}/move-to-end`, {
+      await fetch(`${API_BASE_URL}/queue/tickets/${ticketId}/move-to-end`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason })
@@ -312,7 +310,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateRemarks = useCallback(async (ticketId: string, remark: string) => {
     try {
-      await fetch(`${API_URL}/queue/tickets/${ticketId}/remarks`, {
+      await fetch(`${API_BASE_URL}/queue/tickets/${ticketId}/remarks`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ remark })
@@ -324,7 +322,7 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateCustomerInfo = useCallback(async (ticketId: string, phone?: string, email?: string, note?: string) => {
     try {
-      await fetch(`${API_URL}/queue/tickets/${ticketId}/customer-info`, {
+      await fetch(`${API_BASE_URL}/queue/tickets/${ticketId}/customer-info`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, email, note })
