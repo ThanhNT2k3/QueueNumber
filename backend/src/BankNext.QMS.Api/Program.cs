@@ -24,8 +24,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database
+// Database
+var dbProvider = builder.Configuration["DatabaseProvider"];
 builder.Services.AddDbContext<QmsDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=qms.db"));
+{
+    if (string.Equals(dbProvider, "SqlServer", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection"));
+    }
+    else
+    {
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=qms.db");
+    }
+});
 
 // SignalR
 builder.Services.AddSignalR();

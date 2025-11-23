@@ -7,6 +7,7 @@ public class Category
     public string Description { get; set; } = string.Empty;
     public string Icon { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
+    public string Prefix { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public int DisplayOrder { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

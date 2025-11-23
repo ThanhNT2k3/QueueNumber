@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BankNext.QMS.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cd51b21bb02429dd761de1b7f286a04eca260e0b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88ba1cfd4d74104d1e1cbf6385cb199dd606888a")]
 [assembly: System.Reflection.AssemblyProductAttribute("BankNext.QMS.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BankNext.QMS.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

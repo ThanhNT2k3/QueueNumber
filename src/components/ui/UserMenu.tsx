@@ -1,14 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../stores/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../config/translations';
+import { API_BASE_URL } from '../../config/constants';
 import * as Icons from 'lucide-react';
 
 export const UserMenu: React.FC = () => {
     const { user, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const [branchName, setBranchName] = useState<string | null>(null);
     const navigate = useNavigate();
     const { t } = useTranslation();
+
+    useEffect(() => {
+        const fetchBranchName = async () => {
+            if (user?.branchId && (user.role === 'TELLER' || user.role === 'MANAGER')) {
+                try {
+                    // Try to fetch specific branch first if endpoint exists, otherwise fetch all
+                    // Based on BranchManagementPage, we can use /branch/{id}
+                    const response = await fetch(`${API_BASE_URL}/branch/${user.branchId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setBranchName(data.name);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch branch info", error);
+                }
+            }
+        };
+
+        fetchBranchName();
+    }, [user]);
 
     if (!user) return null;
 
@@ -35,7 +57,14 @@ export const UserMenu: React.FC = () => {
                 />
                 <div className="text-left hidden md:block">
                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.role}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-500">{user.role}</p>
+                        {branchName && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded border border-gray-200 truncate max-w-[120px]" title={branchName}>
+                                {branchName}
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <Icons.ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -64,9 +93,17 @@ export const UserMenu: React.FC = () => {
                                     <p className="text-xs text-blue-100">{user.email}</p>
                                 </div>
                             </div>
-                            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getRoleBadgeColor(user.role)} bg-white bg-opacity-90`}>
-                                <Icons.Shield className="w-3 h-3" />
-                                {user.role}
+                            <div className="flex flex-wrap gap-2">
+                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getRoleBadgeColor(user.role)} bg-white bg-opacity-90`}>
+                                    <Icons.Shield className="w-3 h-3" />
+                                    {user.role}
+                                </div>
+                                {branchName && (
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border bg-white/20 text-white border-white/30">
+                                        <Icons.Building2 className="w-3 h-3" />
+                                        {branchName}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -87,23 +124,6 @@ export const UserMenu: React.FC = () => {
                                     <p className="text-xs text-gray-500">{t.menu.profileDesc}</p>
                                 </div>
                             </button>
-
-                            <button
-                                onClick={() => {
-                                    setIsOpen(false);
-                                    // Navigate to settings
-                                }}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-left group"
-                            >
-                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                                    <Icons.Settings className="w-4 h-4 text-purple-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-900">{t.menu.settings}</p>
-                                    <p className="text-xs text-gray-500">{t.menu.settingsDesc}</p>
-                                </div>
-                            </button>
-
                             <div className="my-2 border-t border-gray-200"></div>
 
                             <button

@@ -1,8 +1,8 @@
 export const translations = {
     en: {
         login: {
-            title: "Standard Chartered QMS",
-            subtitle: "Next Gen Branch Experience",
+            title: "Standard Chartered",
+            subtitle: "",
             welcome: "Welcome Back",
             emailLabel: "Email Address",
             passwordLabel: "Password",
@@ -38,8 +38,8 @@ export const translations = {
     },
     vi: {
         login: {
-            title: "Standard Chartered QMS",
-            subtitle: "Trải nghiệm chi nhánh thế hệ mới",
+            title: "Standard Chartered",
+            subtitle: "",
             welcome: "Chào mừng trở lại",
             emailLabel: "Địa chỉ Email",
             passwordLabel: "Mật khẩu",
