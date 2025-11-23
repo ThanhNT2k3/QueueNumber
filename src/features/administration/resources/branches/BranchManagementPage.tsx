@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-import { BRANCHES } from '../../../../config/constants';
 import { API_BASE_URL } from '../../../../config/constants';
 
 interface Branch {

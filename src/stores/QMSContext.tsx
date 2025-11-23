@@ -222,7 +222,8 @@ export const QMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const eligibleTickets = tickets.filter(t =>
       t.status === TicketStatus.WAITING &&
       (!t.branchId || !counter.branchId || t.branchId === counter.branchId) && // Match Branch
-      (counter.serviceTags.includes(t.serviceType) || counter.serviceTags.includes(ServiceType.VIP))
+      (counter.serviceTags.includes(t.serviceType) || counter.serviceTags.includes(ServiceType.VIP)) &&
+      (!t.counterId || t.counterId === counterId) // Match Counter Assignment
     );
 
     if (eligibleTickets.length === 0) return;

@@ -23,6 +23,7 @@ export const CounterDisplay: React.FC = () => {
 
     const counter = counters.find(c => c.id === selectedCounterId);
     const currentTicket = tickets.find(t => t.id === counter?.currentTicketId);
+    console.log("tickets :", tickets);
 
     // Auto-select counter logic
     useEffect(() => {
@@ -66,6 +67,7 @@ export const CounterDisplay: React.FC = () => {
             t.status === TicketStatus.WAITING &&
             counter?.serviceTags.includes(t.serviceType)
             && t.branchId === counter.branchId
+            && t.counterId === counter.id
         )
         .sort((a, b) => {
             // Sort by Priority (Highest first), then Time (Oldest first)

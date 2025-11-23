@@ -1,15 +1,33 @@
 import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
-import { Ticket } from '../../../../types/types';
-import { SERVICES } from '../../../../config/service-definitions';
-
+import { Ticket, TicketStatus } from '../../../../types/types';
+import { useBranches } from '../../../../stores/BranchContext';
 interface ServiceHistorySidebarProps {
     completedTickets: Ticket[];
 }
 
+const statusToText = (status: TicketStatus): string => {
+    switch (status) {
+        case TicketStatus.SERVING:
+            return 'Đang xử lý';
+        case TicketStatus.COMPLETED:
+            return 'Hoàn thành';
+        case TicketStatus.MISSED:
+            return 'Đã hủy';
+        case TicketStatus.TRANSFERRED:
+            return 'Đã chuyển';
+        case TicketStatus.CALLED:
+            return 'Đã gọi';
+        case TicketStatus.WAITING:
+            return 'Đang chờ';
+        default:
+            return 'Không xác định';
+    }
+};
+
 export const ServiceHistorySidebar: React.FC<ServiceHistorySidebarProps> = ({ completedTickets }) => {
     const [selectedHistoryTicket, setSelectedHistoryTicket] = useState<Ticket | null>(null);
-
+    const { branches } = useBranches();
     const formatTime = (timestamp?: number) => {
         if (!timestamp) return '-';
         return new Date(timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -41,8 +59,8 @@ export const ServiceHistorySidebar: React.FC<ServiceHistorySidebarProps> = ({ co
                                     <span className="text-xs text-gray-500">{formatTime(ticket.completedTime)}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-600">{SERVICES.find(s => s.id === ticket.serviceType)?.name}</span>
-                                    <span className="text-gray-500">{formatDuration(ticket.createdTime, ticket.completedTime)}</span>
+                                    <span className="text-gray-600">{branches.find(s => s.id === ticket.branchId)?.name}</span>
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">{statusToText(ticket.status)}</span>
                                 </div>
                                 {ticket.customer?.name && (
                                     <p className="text-xs text-gray-500 mt-1">{ticket.customer.name}</p>
@@ -73,12 +91,12 @@ export const ServiceHistorySidebar: React.FC<ServiceHistorySidebarProps> = ({ co
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-xs text-gray-500 mb-1">Service</p>
-                                    <p className="font-semibold">{SERVICES.find(s => s.id === selectedHistoryTicket.serviceType)?.name}</p>
+                                    <p className="font-semibold">{branches.find(s => s.id === selectedHistoryTicket.serviceType)?.name}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 mb-1">Status</p>
                                     <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">
-                                        {selectedHistoryTicket.status}
+                                        {statusToText(selectedHistoryTicket.status)}
                                     </span>
                                 </div>
                             </div>

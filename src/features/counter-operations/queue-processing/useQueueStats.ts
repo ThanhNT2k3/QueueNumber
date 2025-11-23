@@ -15,6 +15,10 @@ export const useQueueStats = (myCounter: Counter | undefined) => {
         if (t.status !== TicketStatus.WAITING) return false;
         if (!myCounter) return false;
         if (t.branchId && myCounter.branchId && t.branchId !== myCounter.branchId) return false;
+
+        // If ticket is assigned to a specific counter, only show it to that counter
+        if (t.counterId && t.counterId !== myCounter.id) return false;
+
         return myCounter.serviceTags.includes(t.serviceType) || myCounter.serviceTags.includes(ServiceType.VIP);
     }).sort((a, b) => {
         if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;

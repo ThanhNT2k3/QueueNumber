@@ -70,7 +70,7 @@ const App: React.FC = () => {
               <Icons.Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Standard Chartered QMS</h1>
+              <h1 className="text-lg font-bold text-gray-900">Standard Chartered</h1>
               <p className="text-xs text-gray-500">Queue Management System</p>
             </div>
           </div>

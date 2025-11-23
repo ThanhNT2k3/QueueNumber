@@ -23,6 +23,7 @@ public class CreateTicketResponse
     public CustomerSegment CustomerSegment { get; set; }
     public string? CustomerId { get; set; }
     public string? BranchId { get; set; }
+    public string? CounterId { get; set; }
 }
 
 public class CallTicketRequest

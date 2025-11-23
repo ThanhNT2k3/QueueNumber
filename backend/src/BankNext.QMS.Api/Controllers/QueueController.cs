@@ -75,7 +75,9 @@ public class QueueController : ControllerBase
             // Calculate queue position for this counter
             var allTickets = await _context.Tickets.ToListAsync();
             var counterServiceTags = bestCounter.ServiceTags.Split(',').Select(s => Enum.Parse<ServiceType>(s)).ToList();
-            
+            ticket.CounterId = bestCounter.Id;  
+            await _context.SaveChangesAsync(); // Persist the counter assignment
+
             queuePosition = allTickets
                 .Where(t => t.Status == TicketStatus.WAITING && counterServiceTags.Contains(t.ServiceType))
                 .OrderByDescending(t => t.PriorityScore)
