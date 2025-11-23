@@ -1,8 +1,8 @@
-import { useQMS } from '../../../stores/QMSContext';
+import { useQMSStore } from '../../../stores';
 import { TicketStatus, ServiceType, Counter } from '../../../types/types';
 
 export const useQueueStats = (myCounter: Counter | undefined) => {
-    const { tickets } = useQMS();
+    const { tickets } = useQMSStore();
 
     // Get completed tickets for history (last 20)
     const completedTickets = tickets

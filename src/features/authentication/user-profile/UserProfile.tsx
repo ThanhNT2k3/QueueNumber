@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../stores/AuthContext';
+import { useAuthStore } from '../../../stores';
 import * as Icons from 'lucide-react';
+import { Button, TextInput, Alert, Card } from '../../../components/ui';
 
 export const UserProfile: React.FC = () => {
-    const { user, login } = useAuth(); // In a real app, we'd have an update function in context
+    const { user, logout } = useAuthStore();
     const [fullName, setFullName] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -12,7 +13,7 @@ export const UserProfile: React.FC = () => {
 
     useEffect(() => {
         if (user) {
-            setFullName(user.name);
+            setFullName(user.fullName);
             setAvatarUrl(user.avatar || '');
         }
     }, [user]);
@@ -23,15 +24,7 @@ export const UserProfile: React.FC = () => {
         setMessage(null);
 
         try {
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // In a real implementation, we would call an API endpoint here:
-            // await api.updateProfile({ fullName, avatarUrl });
-
-            // For now, we'll just show a success message as we haven't implemented the backend update yet
-            // To make it persist locally for the session, we'd need to update the AuthContext
-
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             setIsEditing(false);
         } catch (error) {
@@ -48,7 +41,7 @@ export const UserProfile: React.FC = () => {
             <div className="w-full max-w-2xl">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <Card>
                     {/* Header / Cover */}
                     <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
 
@@ -56,8 +49,8 @@ export const UserProfile: React.FC = () => {
                         <div className="relative flex justify-between items-end -mt-12 mb-6">
                             <div className="relative">
                                 <img
-                                    src={avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
-                                    alt={user.name}
+                                    src={avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`}
+                                    alt={user.fullName}
                                     className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover bg-white"
                                 />
                                 {isEditing && (
@@ -67,69 +60,60 @@ export const UserProfile: React.FC = () => {
                                 )}
                             </div>
                             {!isEditing && (
-                                <button
+                                <Button
                                     onClick={() => setIsEditing(true)}
-                                    className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                    variant="outline"
+                                    leftIcon={<Icons.Edit2 size={16} />}
                                 >
-                                    <Icons.Edit2 size={16} /> Edit Profile
-                                </button>
+                                    Edit Profile
+                                </Button>
                             )}
                         </div>
 
                         {message && (
-                            <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                {message.type === 'success' ? <Icons.CheckCircle size={20} /> : <Icons.AlertCircle size={20} />}
+                            <Alert
+                                variant={message.type === 'success' ? 'success' : 'error'}
+                                className="mb-6"
+                                onClose={() => setMessage(null)}
+                            >
                                 {message.text}
-                            </div>
+                            </Alert>
                         )}
 
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Full Name</label>
-                                    <input
-                                        type="text"
-                                        value={user.fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        disabled={!isEditing}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Role</label>
-                                    <input
-                                        type="text"
-                                        value={user.role}
-                                        disabled
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-500"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Email / Username</label>
-                                    <input
-                                        type="text"
-                                        value={user.email}
-                                        disabled
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-500"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Assigned Counter ID</label>
-                                    <input
-                                        type="text"
-                                        value={user.assignedCounterId || 'None'}
-                                        disabled
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-500 font-mono text-sm"
-                                    />
-                                </div>
+                                <TextInput
+                                    label="Full Name"
+                                    value={user.fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    disabled={!isEditing}
+                                />
+
+                                <TextInput
+                                    label="Role"
+                                    value={user.role}
+                                    disabled
+                                />
+
+                                <TextInput
+                                    label="Email / Username"
+                                    value={user.email}
+                                    disabled
+                                />
+
+                                <TextInput
+                                    label="Assigned Counter ID"
+                                    value={user.assignedCounterId || 'None'}
+                                    disabled
+                                    className="font-mono text-sm"
+                                />
+
                                 {isEditing && (
-                                    <div className="col-span-2 space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Avatar URL</label>
-                                        <input
-                                            type="text"
+                                    <div className="col-span-2">
+                                        <TextInput
+                                            label="Avatar URL"
                                             value={avatarUrl}
                                             onChange={(e) => setAvatarUrl(e.target.value)}
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             placeholder="https://example.com/avatar.jpg"
                                         />
                                     </div>
@@ -138,31 +122,30 @@ export const UserProfile: React.FC = () => {
 
                             {isEditing && (
                                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="ghost"
                                         onClick={() => {
                                             setIsEditing(false);
-                                            setFullName(user.name);
+                                            setFullName(user.fullName);
                                             setAvatarUrl(user.avatar || '');
                                             setMessage(null);
                                         }}
-                                        className="px-6 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                                     >
                                         Cancel
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         type="submit"
-                                        disabled={isLoading}
-                                        className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                                        isLoading={isLoading}
+                                        leftIcon={!isLoading && <Icons.Save size={18} />}
                                     >
-                                        {isLoading ? <Icons.Loader2 className="animate-spin" size={18} /> : <Icons.Save size={18} />}
                                         Save Changes
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </form>
                     </div>
-                </div>
+                </Card>
             </div>
         </div>
     );

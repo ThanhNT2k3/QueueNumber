@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
 import { API_BASE_URL } from '../../../config/constants';
+import {
+    Button,
+    Dropdown,
+    Badge,
+    StatCard,
+    Table,
+    TableHeader,
+    TableBody,
+    TableRow,
+    TableHead,
+    TableCell,
+    Card,
+    DateTimeInput
+} from '../../../components/ui';
 
 interface AuditRecord {
     id: string;
@@ -63,16 +77,12 @@ export const CounterAssignmentAuditPage: React.FC = () => {
         return true;
     });
 
-    const getActionBadgeColor = (action: string) => {
+    const getActionBadgeVariant = (action: string): 'success' | 'info' | 'error' | 'neutral' => {
         switch (action) {
-            case 'ASSIGNED':
-                return 'bg-green-100 text-green-700';
-            case 'REASSIGNED':
-                return 'bg-blue-100 text-blue-700';
-            case 'UNASSIGNED':
-                return 'bg-red-100 text-red-700';
-            default:
-                return 'bg-gray-100 text-gray-700';
+            case 'ASSIGNED': return 'success';
+            case 'REASSIGNED': return 'info';
+            case 'UNASSIGNED': return 'error';
+            default: return 'neutral';
         }
     };
 
@@ -90,6 +100,14 @@ export const CounterAssignmentAuditPage: React.FC = () => {
     const uniqueBranches = Array.from(new Set(auditRecords.map(r => r.branchId).filter(Boolean)));
     const uniqueActions = Array.from(new Set(auditRecords.map(r => r.action)));
 
+    const handleClearFilters = () => {
+        setFromDate('');
+        setToDate('');
+        setFilterBranch('');
+        setFilterAction('');
+        fetchAuditRecords();
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto">
             {/* Header */}
@@ -106,221 +124,144 @@ export const CounterAssignmentAuditPage: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <Card className="p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">From Date</label>
-                        <input
-                            type="date"
-                            value={fromDate}
-                            onChange={(e) => setFromDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">To Date</label>
-                        <input
-                            type="date"
-                            value={toDate}
-                            onChange={(e) => setToDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Branch</label>
-                        <select
-                            value={filterBranch}
-                            onChange={(e) => setFilterBranch(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="">All Branches</option>
-                            {uniqueBranches.map(branch => (
-                                <option key={branch} value={branch!}>{branch}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Action</label>
-                        <select
-                            value={filterAction}
-                            onChange={(e) => setFilterAction(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="">All Actions</option>
-                            {uniqueActions.map(action => (
-                                <option key={action} value={action}>{action}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DateTimeInput
+                        label="From Date"
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                    />
+
+                    <DateTimeInput
+                        label="To Date"
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                    />
+
+                    <Dropdown
+                        label="Branch"
+                        value={filterBranch}
+                        onChange={(e) => setFilterBranch(e.target.value)}
+                    >
+                        <option value="">All Branches</option>
+                        {uniqueBranches.map(branch => (
+                            <option key={branch} value={branch!}>{branch}</option>
+                        ))}
+                    </Dropdown>
+
+                    <Dropdown
+                        label="Action"
+                        value={filterAction}
+                        onChange={(e) => setFilterAction(e.target.value)}
+                    >
+                        <option value="">All Actions</option>
+                        {uniqueActions.map(action => (
+                            <option key={action} value={action}>{action}</option>
+                        ))}
+                    </Dropdown>
                 </div>
                 <div className="mt-4 flex gap-2">
-                    <button
-                        onClick={fetchAuditRecords}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors flex items-center gap-2"
-                    >
-                        <Icons.Search className="w-4 h-4" />
+                    <Button onClick={fetchAuditRecords} leftIcon={<Icons.Search className="w-4 h-4" />}>
                         Apply Filters
-                    </button>
-                    <button
-                        onClick={() => {
-                            setFromDate('');
-                            setToDate('');
-                            setFilterBranch('');
-                            setFilterAction('');
-                            fetchAuditRecords();
-                        }}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors flex items-center gap-2"
-                    >
-                        <Icons.X className="w-4 h-4" />
+                    </Button>
+                    <Button variant="secondary" onClick={handleClearFilters} leftIcon={<Icons.X className="w-4 h-4" />}>
                         Clear
-                    </button>
+                    </Button>
                 </div>
-            </div>
+            </Card>
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <Icons.FileText className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">Total Records</p>
-                            <p className="text-xl font-bold text-gray-900">{filteredRecords.length}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Icons.UserPlus className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">Assignments</p>
-                            <p className="text-xl font-bold text-gray-900">
-                                {filteredRecords.filter(r => r.action === 'ASSIGNED').length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Icons.RefreshCw className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">Reassignments</p>
-                            <p className="text-xl font-bold text-gray-900">
-                                {filteredRecords.filter(r => r.action === 'REASSIGNED').length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <Icons.UserMinus className="w-5 h-5 text-red-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">Unassignments</p>
-                            <p className="text-xl font-bold text-gray-900">
-                                {filteredRecords.filter(r => r.action === 'UNASSIGNED').length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Total Records"
+                    value={filteredRecords.length}
+                    icon={<Icons.FileText className="w-5 h-5" />}
+                    iconColor="purple"
+                />
+                <StatCard
+                    title="Assignments"
+                    value={filteredRecords.filter(r => r.action === 'ASSIGNED').length}
+                    icon={<Icons.UserPlus className="w-5 h-5" />}
+                    iconColor="green"
+                />
+                <StatCard
+                    title="Reassignments"
+                    value={filteredRecords.filter(r => r.action === 'REASSIGNED').length}
+                    icon={<Icons.RefreshCw className="w-5 h-5" />}
+                    iconColor="blue"
+                />
+                <StatCard
+                    title="Unassignments"
+                    value={filteredRecords.filter(r => r.action === 'UNASSIGNED').length}
+                    icon={<Icons.UserMinus className="w-5 h-5" />}
+                    iconColor="red"
+                />
             </div>
 
             {/* Audit Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Icons.Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Timestamp
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Action
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Counter
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        User
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Previous User
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Branch
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Performed By
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Reason
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        IP Address
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {filteredRecords.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                                            No audit records found
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredRecords.map((record) => (
-                                        <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
-                                                {formatDateTime(record.timestamp)}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getActionBadgeColor(record.action)}`}>
-                                                    {record.action}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-900">
-                                                {record.counterName}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm">
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{record.userName || '-'}</p>
-                                                    <p className="text-xs text-gray-500">{record.userEmail || ''}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600">
-                                                {record.previousUserName || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-900">
-                                                {record.branchId || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-900">
-                                                {record.performedByUserName || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                                                {record.reason || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 font-mono text-xs">
-                                                {record.ipAddress || '-'}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+            {loading ? (
+                <Card className="flex items-center justify-center py-12">
+                    <Icons.Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                </Card>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Timestamp</TableHead>
+                            <TableHead>Action</TableHead>
+                            <TableHead>Counter</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Previous User</TableHead>
+                            <TableHead>Branch</TableHead>
+                            <TableHead>Performed By</TableHead>
+                            <TableHead>Reason</TableHead>
+                            <TableHead>IP Address</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredRecords.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={9} className="text-center text-gray-500 py-8">
+                                    No audit records found
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            filteredRecords.map((record) => (
+                                <TableRow key={record.id}>
+                                    <TableCell className="whitespace-nowrap">
+                                        {formatDateTime(record.timestamp)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={getActionBadgeVariant(record.action)}>
+                                            {record.action}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{record.counterName}</TableCell>
+                                    <TableCell>
+                                        <div>
+                                            <p className="font-medium text-gray-900">{record.userName || '-'}</p>
+                                            <p className="text-xs text-gray-500">{record.userEmail || ''}</p>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-gray-600">
+                                        {record.previousUserName || '-'}
+                                    </TableCell>
+                                    <TableCell>{record.branchId || '-'}</TableCell>
+                                    <TableCell>{record.performedByUserName || '-'}</TableCell>
+                                    <TableCell className="max-w-xs truncate text-gray-600">
+                                        {record.reason || '-'}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs text-gray-600">
+                                        {record.ipAddress || '-'}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            )}
         </div>
     );
 };

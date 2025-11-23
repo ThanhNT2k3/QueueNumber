@@ -1,8 +1,8 @@
-import { useQMS } from '../../../stores/QMSContext';
+import { useQMSStore } from '../../../stores';
 import { TicketStatus, ServiceType, Ticket } from '../../../types/types';
 
 export const useTicketActions = (currentTicket: Ticket | undefined, myCounterId: string | undefined) => {
-    const { callNextTicket, updateTicketStatus, recallTicket, transferTicket, moveToEnd, updateCustomerInfo } = useQMS();
+    const { callNextTicket, updateTicketStatus, recallTicket, transferTicket, moveToEnd, updateCustomerInfo } = useQMSStore();
 
     const handleCallNext = () => {
         if (myCounterId) callNextTicket(myCounterId);

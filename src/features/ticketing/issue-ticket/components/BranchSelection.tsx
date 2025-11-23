@@ -1,13 +1,13 @@
 import React from 'react';
 import * as Icons from 'lucide-react';
-import { useBranches } from '../../../../stores/BranchContext';
+import { useBranchStore } from '../../../../stores';
 
 interface BranchSelectionProps {
     onSelect: (branchId: string) => void;
 }
 
 export const BranchSelection: React.FC<BranchSelectionProps> = ({ onSelect }) => {
-    const { branches, loading } = useBranches();
+    const { branches, loading, error } = useBranchStore();
 
     if (loading) {
         return (

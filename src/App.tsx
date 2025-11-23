@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
-import { useAuth } from './stores/AuthContext';
+import { useAuthStore, useQMSStore, useBranchStore, useCategoryStore } from './stores';
 import { LoginPage, UserProfile } from './features/authentication';
 import { UserMenu } from './components/ui/UserMenu';
 import { KioskPage } from './features/ticketing';
@@ -19,7 +19,7 @@ import { CounterAssignmentAuditPage } from './features/administration/audit/Coun
 import * as Icons from 'lucide-react';
 
 const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, roles?: string[] }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
   const location = useLocation();
 
   if (isLoading) {
@@ -49,8 +49,17 @@ const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, rol
 };
 
 const App: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuthStore();
+  const { initialize: initQMS } = useQMSStore();
+  const { fetchBranches } = useBranchStore();
+  const { fetchCategories } = useCategoryStore();
   const location = useLocation();
+
+  useEffect(() => {
+    initQMS();
+    fetchBranches();
+    fetchCategories();
+  }, []);
 
   // Hide nav on specific routes (Kiosk, Displays, Login)
   const hideNav = location.pathname === '/kiosk' ||

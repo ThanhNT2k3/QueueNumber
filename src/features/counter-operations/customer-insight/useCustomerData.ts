@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useQMS } from '../../../stores/QMSContext';
+import { useQMSStore } from '../../../stores';
 import { Ticket } from '../../../types/types';
 
 export const useCustomerData = (currentTicket: Ticket | undefined) => {
-    const { updateRemarks } = useQMS();
+    const { updateCustomerInfo, updateRemarks } = useQMSStore();
 
     const [customerPhone, setCustomerPhone] = useState('');
     const [customerEmail, setCustomerEmail] = useState('');

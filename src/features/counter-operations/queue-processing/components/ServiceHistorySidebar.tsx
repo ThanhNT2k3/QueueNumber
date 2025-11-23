@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
 import { Ticket, TicketStatus } from '../../../../types/types';
-import { useBranches } from '../../../../stores/BranchContext';
+import { useBranchStore } from '../../../../stores';
 interface ServiceHistorySidebarProps {
     completedTickets: Ticket[];
 }
@@ -27,7 +27,7 @@ const statusToText = (status: TicketStatus): string => {
 
 export const ServiceHistorySidebar: React.FC<ServiceHistorySidebarProps> = ({ completedTickets }) => {
     const [selectedHistoryTicket, setSelectedHistoryTicket] = useState<Ticket | null>(null);
-    const { branches } = useBranches();
+    const { branches } = useBranchStore();
     const formatTime = (timestamp?: number) => {
         if (!timestamp) return '-';
         return new Date(timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });

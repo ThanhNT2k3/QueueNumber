@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../stores/AuthContext';
+import { useAuthStore } from '../../../stores';
 import { useNavigate } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
 import { loginRequest } from '../../../config/msalConfig';
 import { useTranslation } from '../../../config/translations';
 import * as Icons from 'lucide-react';
+import { Button, TextInput } from '../../../components/ui';
 
 export const LoginPage: React.FC = () => {
-    const { login, loginWithMicrosoft, isAuthenticated } = useAuth();
+    const { login, loginWithMicrosoft, isLoading, isAuthenticated } = useAuthStore();
     const navigate = useNavigate();
     const { t, lang, setLang } = useTranslation();
     const { instance } = useMsal();
@@ -16,7 +17,6 @@ export const LoginPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -28,18 +28,16 @@ export const LoginPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
 
         const success = await login(email, password);
 
         if (!success) {
             setError(t.login.error);
-            setIsLoading(false);
         }
     };
+
     const handleMicrosoftLogin = async () => {
         try {
-            setIsLoading(true);
             const response = await instance.loginPopup(loginRequest);
 
             if (response.idToken && response.accessToken) {
@@ -47,13 +45,11 @@ export const LoginPage: React.FC = () => {
 
                 if (!success) {
                     setError('Microsoft login failed. Please try again.');
-                    setIsLoading(false);
                 }
             }
         } catch (error) {
             console.error('Microsoft login error:', error);
             setError('Microsoft login failed. Please try again.');
-            setIsLoading(false);
         }
     };
 
@@ -106,25 +102,16 @@ export const LoginPage: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Email Input */}
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                                {t.login.emailLabel}
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Icons.Mail className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                    placeholder={t.login.emailPlaceholder}
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <TextInput
+                            id="email"
+                            type="email"
+                            label={t.login.emailLabel}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder={t.login.emailPlaceholder}
+                            leftIcon={<Icons.Mail className="h-5 w-5" />}
+                            required
+                        />
 
                         {/* Password Input */}
                         <div>
@@ -167,23 +154,15 @@ export const LoginPage: React.FC = () => {
                         )}
 
                         {/* Login Button */}
-                        <button
+                        <Button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                            fullWidth
+                            isLoading={isLoading}
+                            leftIcon={!isLoading && <Icons.LogIn className="h-5 w-5" />}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02]"
                         >
-                            {isLoading ? (
-                                <>
-                                    <Icons.Loader2 className="h-5 w-5 animate-spin" />
-                                    {t.login.signingIn}
-                                </>
-                            ) : (
-                                <>
-                                    <Icons.LogIn className="h-5 w-5" />
-                                    {t.login.signInButton}
-                                </>
-                            )}
-                        </button>
+                            {isLoading ? t.login.signingIn : t.login.signInButton}
+                        </Button>
                     </form>
 
                     {/* Divider */}
@@ -199,20 +178,23 @@ export const LoginPage: React.FC = () => {
                     {/* SSO Buttons */}
                     <div className="space-y-3">
                         {/* Microsoft SSO */}
-                        <button
+                        <Button
                             onClick={handleMicrosoftLogin}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            variant="outline"
+                            fullWidth
+                            leftIcon={
+                                <svg className="w-5 h-5" viewBox="0 0 23 23">
+                                    <path fill="#f3f3f3" d="M0 0h23v23H0z" />
+                                    <path fill="#f35325" d="M1 1h10v10H1z" />
+                                    <path fill="#81bc06" d="M12 1h10v10H12z" />
+                                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                                    <path fill="#ffba08" d="M12 12h10v10H12z" />
+                                </svg>
+                            }
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 23 23">
-                                <path fill="#f3f3f3" d="M0 0h23v23H0z" />
-                                <path fill="#f35325" d="M1 1h10v10H1z" />
-                                <path fill="#81bc06" d="M12 1h10v10H12z" />
-                                <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                                <path fill="#ffba08" d="M12 12h10v10H12z" />
-                            </svg>
-                            <span className="text-sm font-medium text-gray-700">Sign in with Microsoft</span>
-                        </button>
+                            Sign in with Microsoft
+                        </Button>
                     </div>
 
                     {/* Demo Accounts */}

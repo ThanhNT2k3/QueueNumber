@@ -1,17 +1,16 @@
 
 import React, { useEffect, useState } from 'react';
-import { useQMS } from '../../../stores/QMSContext';
-import { useAuth } from '../../../stores/AuthContext';
-import { TicketStatus } from '../../../types/types';
+import { useQMSStore, useAuthStore } from '../../../stores';
+import { TicketStatus, ServiceType } from '../../../types/types';
 import { useSearchParams } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 
 export const CounterDisplay: React.FC = () => {
-    const { counters, tickets } = useQMS();
+    const { tickets, counters } = useQMSStore();
     const [searchParams] = useSearchParams();
-    const counterIdFromUrl = searchParams.get('counter');
+    const counterIdFromUrl = searchParams.get('counterId');
 
-    const { user } = useAuth();
+    const { user } = useAuthStore();
 
     // Auto-select counter from URL or localStorage or User's assigned counter or first available counter
     const [selectedCounterId, setSelectedCounterId] = useState<string | null>(() => {
@@ -63,12 +62,19 @@ export const CounterDisplay: React.FC = () => {
 
     // Calculate Waiting Statistics specific to this counter's capabilities
     const relevantWaitingTickets = tickets
-        .filter(t =>
-            t.status === TicketStatus.WAITING &&
-            counter?.serviceTags.includes(t.serviceType)
-            && t.branchId === counter.branchId
-            && t.counterId === counter.id
-        )
+        .filter(t => {
+            if (t.status !== TicketStatus.WAITING) return false;
+            if (!counter) return false;
+
+            // Branch matching
+            if (t.branchId && counter.branchId && t.branchId !== counter.branchId) return false;
+
+            // If ticket is assigned to a specific counter, only show it to that counter
+            if (t.counterId && t.counterId !== counter.id) return false;
+
+            // Service type matching
+            return counter.serviceTags.includes(t.serviceType) || counter.serviceTags.includes(ServiceType.VIP);
+        })
         .sort((a, b) => {
             // Sort by Priority (Highest first), then Time (Oldest first)
             if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
@@ -279,7 +285,7 @@ export const CounterDisplay: React.FC = () => {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {t.serviceType === 'VIP' && (
+                                            {t.serviceType === ServiceType.VIP && (
                                                 <span className="bg-yellow-100 text-yellow-700 p-1.5 rounded-lg" title="VIP">
                                                     <Icons.Crown size={14} />
                                                 </span>
@@ -289,7 +295,7 @@ export const CounterDisplay: React.FC = () => {
                                                     <Icons.Calendar size={14} />
                                                 </span>
                                             )}
-                                            {!t.isBooking && t.serviceType !== 'VIP' && (
+                                            {!t.isBooking && t.serviceType !== ServiceType.VIP && (
                                                 <span className="bg-gray-100 text-gray-400 p-1.5 rounded-lg">
                                                     <Icons.User size={14} />
                                                 </span>

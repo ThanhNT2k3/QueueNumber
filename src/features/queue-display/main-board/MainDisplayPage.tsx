@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { useQMS } from '../../../stores/QMSContext';
+import { useQMSStore } from '../../../stores';
 import { TicketStatus, Ticket } from '../../../types/types';
 import { SERVICES } from '../../../config/service-definitions';
 import * as Icons from 'lucide-react';
 
 export const MainDisplay: React.FC = () => {
-  const { tickets, counters } = useQMS();
+  const { tickets, counters } = useQMSStore();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export const MainDisplay: React.FC = () => {
           <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pb-4">
             {counters.map((counter) => {
               const currentTicket = tickets.find(t => t.id === counter.currentTicketId);
-              const isOnline = counter.status === 'ONLINE' || counter.status === 0; // Handle both enum and string if needed
+              const isOnline = counter.status === 'ONLINE';
 
               return (
                 <div key={counter.id} className={`p-4 rounded-xl border shadow-sm transition-all ${currentTicket

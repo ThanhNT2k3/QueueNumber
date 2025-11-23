@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
 import { API_BASE_URL } from '../../../../config/constants';
+import {
+    Button,
+    ButtonIcon,
+    TextInput,
+    Dropdown,
+    Modal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Card,
+    Badge,
+    TextArea,
+    Checkbox
+} from '../../../../components/ui';
 
 interface ServiceCategory {
     id: string;
@@ -135,12 +149,9 @@ export const ServiceManagementPage: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900">Service Categories</h1>
                     <p className="text-gray-500">Configure ticket services and prefixes</p>
                 </div>
-                <button
-                    onClick={handleAdd}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
-                >
-                    <Icons.Plus size={20} /> Add Service
-                </button>
+                <Button onClick={handleAdd} leftIcon={<Icons.Plus size={20} />}>
+                    Add Service
+                </Button>
             </div>
 
             {error && (
@@ -151,148 +162,129 @@ export const ServiceManagementPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {services.map(service => (
-                    <div key={service.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className={`w-12 h-12 rounded-xl ${service.color} flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-gray-200`}>
-                                {service.prefix || service.name.charAt(0)}
+                    <Card key={service.id} className="hover:shadow-md transition-all group">
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className={`w-12 h-12 rounded-xl ${service.color} flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-gray-200`}>
+                                    {service.prefix || service.name.charAt(0)}
+                                </div>
+                                <div className="flex gap-2">
+                                    <ButtonIcon
+                                        onClick={() => handleEdit(service)}
+                                        icon={<Icons.Edit2 size={18} />}
+                                        className="text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                    />
+                                    <ButtonIcon
+                                        onClick={() => handleDelete(service.id)}
+                                        icon={<Icons.Trash2 size={18} />}
+                                        className="text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                    />
+                                </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => handleEdit(service)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                    <Icons.Edit2 size={18} />
-                                </button>
-                                <button onClick={() => handleDelete(service.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                    <Icons.Trash2 size={18} />
-                                </button>
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">{service.name}</h3>
+                            <p className="text-sm text-gray-500 mb-4">Service ID: <span className="font-mono">{service.id}</span></p>
+
+                            {service.description && (
+                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{service.description}</p>
+                            )}
+
+                            <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
+                                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                    {renderIcon(service.icon, 16)}
+                                    <span>{service.icon}</span>
+                                </div>
+                                <Badge variant={service.isActive ? 'success' : 'neutral'}>
+                                    {service.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
                             </div>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">{service.name}</h3>
-                        <p className="text-sm text-gray-500 mb-4">Service ID: <span className="font-mono">{service.id}</span></p>
-
-                        {service.description && (
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{service.description}</p>
-                        )}
-
-                        <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
-                            <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                {renderIcon(service.icon, 16)}
-                                <span>{service.icon}</span>
-                            </div>
-                            <span className={`px-2 py-1 rounded text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                {service.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                        </div>
-                    </div>
+                    </Card>
                 ))}
             </div>
 
             {/* Add/Edit Modal */}
-            {isModalOpen && currentService && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold mb-6">{services.find(s => s.id === currentService.id) ? 'Edit Service' : 'Add New Service'}</h2>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+                <ModalHeader onClose={() => setIsModalOpen(false)}>
+                    {currentService && services.find(s => s.id === currentService.id) ? 'Edit Service' : 'Add New Service'}
+                </ModalHeader>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Service ID</label>
-                                <input
-                                    type="text"
-                                    value={currentService.id}
-                                    onChange={e => setCurrentService({ ...currentService, id: e.target.value })}
-                                    disabled={!!services.find(s => s.id === currentService.id)}
-                                    placeholder="e.g., 0, 1, VIP"
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Unique identifier for the service.</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
-                                <input
-                                    type="text"
-                                    value={currentService.name}
-                                    onChange={e => setCurrentService({ ...currentService, name: e.target.value })}
-                                    placeholder="e.g., Deposit & Withdrawal"
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Prefix</label>
-                                <input
-                                    type="text"
-                                    value={currentService.prefix}
-                                    onChange={e => setCurrentService({ ...currentService, prefix: e.target.value.toUpperCase() })}
-                                    placeholder="e.g., A, B, V"
-                                    maxLength={2}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Ticket prefix (e.g., A-001).</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea
-                                    value={currentService.description}
-                                    onChange={e => setCurrentService({ ...currentService, description: e.target.value })}
-                                    placeholder="Service description..."
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Color Class</label>
-                                    <select
-                                        value={currentService.color}
-                                        onChange={e => setCurrentService({ ...currentService, color: e.target.value })}
-                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    >
-                                        <option value="bg-blue-500">Blue</option>
-                                        <option value="bg-green-500">Green</option>
-                                        <option value="bg-purple-500">Purple</option>
-                                        <option value="bg-yellow-500">Yellow</option>
-                                        <option value="bg-red-500">Red</option>
-                                        <option value="bg-indigo-500">Indigo</option>
-                                        <option value="bg-pink-500">Pink</option>
-                                        <option value="bg-gray-500">Gray</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Icon Name</label>
-                                    <input
-                                        type="text"
-                                        value={currentService.icon}
-                                        onChange={e => setCurrentService({ ...currentService, icon: e.target.value })}
-                                        placeholder="e.g., Wallet"
-                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="isActive"
-                                    checked={currentService.isActive}
-                                    onChange={e => setCurrentService({ ...currentService, isActive: e.target.checked })}
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active</label>
-                            </div>
+                {currentService && (
+                    <ModalBody className="space-y-4">
+                        <TextInput
+                            label="Service ID"
+                            value={currentService.id}
+                            onChange={e => setCurrentService({ ...currentService, id: e.target.value })}
+                            disabled={!!services.find(s => s.id === currentService.id)}
+                            placeholder="e.g., 0, 1, VIP"
+                            helperText="Unique identifier for the service."
+                        />
+
+                        <TextInput
+                            label="Service Name"
+                            value={currentService.name}
+                            onChange={e => setCurrentService({ ...currentService, name: e.target.value })}
+                            placeholder="e.g., Deposit & Withdrawal"
+                        />
+
+                        <TextInput
+                            label="Prefix"
+                            value={currentService.prefix}
+                            onChange={e => setCurrentService({ ...currentService, prefix: e.target.value.toUpperCase() })}
+                            placeholder="e.g., A, B, V"
+                            maxLength={2}
+                            helperText="Ticket prefix (e.g., A-001)."
+                        />
+
+                        <TextArea
+                            label="Description"
+                            value={currentService.description}
+                            onChange={e => setCurrentService({ ...currentService, description: e.target.value })}
+                            placeholder="Service description..."
+                            rows={3}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Dropdown
+                                label="Color Class"
+                                value={currentService.color}
+                                onChange={e => setCurrentService({ ...currentService, color: e.target.value })}
+                                options={[
+                                    { value: 'bg-blue-500', label: 'Blue' },
+                                    { value: 'bg-green-500', label: 'Green' },
+                                    { value: 'bg-purple-500', label: 'Purple' },
+                                    { value: 'bg-yellow-500', label: 'Yellow' },
+                                    { value: 'bg-red-500', label: 'Red' },
+                                    { value: 'bg-indigo-500', label: 'Indigo' },
+                                    { value: 'bg-pink-500', label: 'Pink' },
+                                    { value: 'bg-gray-500', label: 'Gray' },
+                                ]}
+                            />
+
+                            <TextInput
+                                label="Icon Name"
+                                value={currentService.icon}
+                                onChange={e => setCurrentService({ ...currentService, icon: e.target.value })}
+                                placeholder="e.g., Wallet"
+                            />
                         </div>
 
-                        <div className="flex justify-end gap-3 mt-8">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-lg shadow-blue-200"
-                            >
-                                Save Service
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        <Checkbox
+                            label="Active"
+                            checked={currentService.isActive}
+                            onChange={e => setCurrentService({ ...currentService, isActive: e.target.checked })}
+                        />
+                    </ModalBody>
+                )}
+
+                <ModalFooter>
+                    <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSave}>
+                        Save Service
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </div>
     );
 };

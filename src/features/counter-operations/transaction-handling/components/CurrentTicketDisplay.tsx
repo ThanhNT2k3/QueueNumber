@@ -1,24 +1,30 @@
 import React from 'react';
 import { Ticket } from '../../../../types/types';
-import { SERVICES } from '../../../../config/service-definitions';
+import { Badge } from '../../../../components/ui';
+import { useCategoryStore } from '../../../../stores';
 
 interface CurrentTicketDisplayProps {
     ticket: Ticket;
 }
 
 export const CurrentTicketDisplay: React.FC<CurrentTicketDisplayProps> = ({ ticket }) => {
+    const { categories } = useCategoryStore();
+
+    // Find the category/service name from API data
+    const serviceName = categories.find(c => c.id === ticket.serviceType?.toString())?.name || 'Unknown Service';
+
     return (
         <div className="text-center mb-8">
             <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">SERVING</span>
             <h2 className="text-8xl font-black text-blue-600 my-4">{ticket.number}</h2>
             <div className="flex gap-2 justify-center">
-                <span className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                    {SERVICES.find(s => s.id === ticket.serviceType)?.name}
-                </span>
+                <Badge variant="info" className="px-4 py-1.5 text-sm">
+                    {serviceName}
+                </Badge>
                 {ticket.customer?.name && (
-                    <span className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-semibold">
+                    <Badge variant="neutral" className="px-4 py-1.5 text-sm">
                         {ticket.customer.name}
-                    </span>
+                    </Badge>
                 )}
             </div>
         </div>

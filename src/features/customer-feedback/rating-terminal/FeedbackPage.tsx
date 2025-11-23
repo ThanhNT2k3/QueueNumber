@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQMS } from '../../../stores/QMSContext';
+import { useQMSStore } from '../../../stores';
 import { TicketStatus } from '../../../types/types';
 import * as Icons from 'lucide-react';
 
@@ -8,7 +8,7 @@ const TAGS_POSITIVE = ["Friendly Staff", "Fast Service", "Professional", "Clear 
 const TAGS_NEGATIVE = ["Long Wait", "Rude Attitude", "Slow System", "Unclear Info"];
 
 export const FeedbackTerminal: React.FC = () => {
-  const { counters, tickets, submitFeedback } = useQMS();
+  const { tickets, submitFeedback, counters } = useQMSStore();
   // Hardcoded to Counter 1 for this demo. In real app, this is config based.
   const counter = counters.find(c => c.id === '1');
 

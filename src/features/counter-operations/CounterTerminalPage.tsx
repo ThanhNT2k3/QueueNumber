@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
-import { useQMS } from '../../stores/QMSContext';
+import { useQMSStore, useAuthStore } from '../../stores';
 
 // Sub-features
 import { useCounterSession } from './session-control/useCounterSession';
@@ -20,7 +20,7 @@ import { CustomerInfoPanel } from './customer-insight/components/CustomerInfoPan
 import { RemarkPanel } from './customer-insight/components/RemarkPanel';
 
 const CounterTerminalPage: React.FC = () => {
-    const { tickets } = useQMS();
+    const { tickets } = useQMSStore();
 
     // 1. Session Control
     const { myCounter, counters, isOnline } = useCounterSession();

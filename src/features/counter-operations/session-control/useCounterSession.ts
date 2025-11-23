@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useQMS } from '../../../stores/QMSContext';
-import { useAuth } from '../../../stores/AuthContext';
+import { useQMSStore, useAuthStore } from '../../../stores';
 import { Counter } from '../../../types/types';
 
 export const useCounterSession = () => {
-    const { counters, toggleCounterStatus } = useQMS();
-    const { user, assignCounter } = useAuth();
+    const { counters, toggleCounterStatus } = useQMSStore();
+    const { user, updateAssignedCounter, assignCounter } = useAuthStore();
     const [selectedCounterId, setSelectedCounterId] = useState<string>('');
 
     useEffect(() => {

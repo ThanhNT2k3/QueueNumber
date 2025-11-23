@@ -1,10 +1,44 @@
 import React from 'react';
 import * as Icons from 'lucide-react';
-import { useQMS } from '../../../stores/QMSContext';
+import { useQMSStore } from '../../../stores';
 import { TicketStatus } from '../../../types/types';
 import { SERVICES } from '../../../config/service-definitions';
+import { Button, Card } from '../../../components/ui';
+
+interface ReportCardProps {
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    iconColor: string;
+    buttonText: string;
+    onDownload: () => void;
+}
+
+const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, iconColor, buttonText, onDownload }) => (
+    <Card>
+        <div className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+                <div className={`p-3 ${iconColor} rounded-lg`}>
+                    {icon}
+                </div>
+                <div>
+                    <h3 className="font-semibold text-gray-900">{title}</h3>
+                    <p className="text-sm text-gray-500">{description}</p>
+                </div>
+            </div>
+            <Button variant="outline" fullWidth onClick={onDownload}>
+                {buttonText}
+            </Button>
+        </div>
+    </Card>
+);
 
 export const ReportsPage: React.FC = () => {
+    const handleDownload = (reportType: string) => {
+        console.log(`Downloading ${reportType} report...`);
+        // TODO: Implement actual download logic
+    };
+
     return (
         <div className="p-8 bg-gray-50 h-full overflow-y-auto">
             <div className="mb-8">
@@ -13,53 +47,35 @@ export const ReportsPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                            <Icons.FileBarChart size={24} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-900">Daily Performance</h3>
-                            <p className="text-sm text-gray-500">Wait times & volume</p>
-                        </div>
-                    </div>
-                    <button className="w-full py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                        Download PDF
-                    </button>
-                </div>
+                <ReportCard
+                    title="Daily Performance"
+                    description="Wait times & volume"
+                    icon={<Icons.FileBarChart size={24} />}
+                    iconColor="bg-blue-50 text-blue-600"
+                    buttonText="Download PDF"
+                    onDownload={() => handleDownload('daily-performance')}
+                />
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-                            <Icons.Users size={24} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-900">Staff Efficiency</h3>
-                            <p className="text-sm text-gray-500">Service duration stats</p>
-                        </div>
-                    </div>
-                    <button className="w-full py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                        Download Excel
-                    </button>
-                </div>
+                <ReportCard
+                    title="Staff Efficiency"
+                    description="Service duration stats"
+                    icon={<Icons.Users size={24} />}
+                    iconColor="bg-green-50 text-green-600"
+                    buttonText="Download Excel"
+                    onDownload={() => handleDownload('staff-efficiency')}
+                />
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                            <Icons.Smile size={24} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-900">Customer Satisfaction</h3>
-                            <p className="text-sm text-gray-500">Feedback summary</p>
-                        </div>
-                    </div>
-                    <button className="w-full py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                        Download CSV
-                    </button>
-                </div>
+                <ReportCard
+                    title="Customer Satisfaction"
+                    description="Feedback summary"
+                    icon={<Icons.Smile size={24} />}
+                    iconColor="bg-purple-50 text-purple-600"
+                    buttonText="Download CSV"
+                    onDownload={() => handleDownload('customer-satisfaction')}
+                />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+            <Card className="p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <Icons.BarChart className="text-gray-400" size={32} />
                 </div>
@@ -67,7 +83,7 @@ export const ReportsPage: React.FC = () => {
                 <p className="text-gray-500 max-w-md">
                     We are currently integrating with the core banking data warehouse to provide real-time financial impact analysis.
                 </p>
-            </div>
+            </Card>
         </div>
     );
 };

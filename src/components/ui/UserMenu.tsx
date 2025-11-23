@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../stores/AuthContext';
+import { useAuthStore } from '../../stores';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../config/translations';
 import { API_BASE_URL } from '../../config/constants';
 import * as Icons from 'lucide-react';
 
 export const UserMenu: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout } = useAuthStore();
     const [isOpen, setIsOpen] = useState(false);
     const [branchName, setBranchName] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -51,12 +51,12 @@ export const UserMenu: React.FC = () => {
                 className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
                 <img
-                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-                    alt={user.name}
+                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`}
+                    alt={user.fullName}
                     className="w-10 h-10 rounded-full border-2 border-white shadow-md"
                 />
                 <div className="text-left hidden md:block">
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                    <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                     <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-500">{user.role}</p>
                         {branchName && (
@@ -84,12 +84,12 @@ export const UserMenu: React.FC = () => {
                         <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-4 text-white">
                             <div className="flex items-center gap-3 mb-3">
                                 <img
-                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-                                    alt={user.name}
+                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`}
+                                    alt={user.fullName}
                                     className="w-12 h-12 rounded-full border-2 border-white shadow-lg"
                                 />
                                 <div className="flex-1">
-                                    <p className="font-semibold text-white">{user.name}</p>
+                                    <p className="font-semibold text-white">{user.fullName}</p>
                                     <p className="text-xs text-blue-100">{user.email}</p>
                                 </div>
                             </div>

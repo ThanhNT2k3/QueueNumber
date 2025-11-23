@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useQMS } from '../../../stores/QMSContext';
+import { useBranchStore, useQMSStore } from '../../../stores';
 import { ServiceType } from '../../../types/types';
 import * as Icons from 'lucide-react';
-import { useBranches } from '../../../stores/BranchContext';
 
 import { BranchSelection } from './components/BranchSelection';
 import { WelcomeScreen } from './components/WelcomeScreen';
@@ -10,8 +9,8 @@ import { ServiceSelection } from './components/ServiceSelection';
 import { PrintingScreen } from './components/PrintingScreen';
 
 export const KioskPage: React.FC = () => {
-    const { createTicket } = useQMS();
-    const { branches } = useBranches();
+    const { createTicket } = useQMSStore();
+    const { branches } = useBranchStore();
     const [step, setStep] = useState<'BRANCH_SELECTION' | 'WELCOME' | 'SERVICE' | 'PRINTING'>('BRANCH_SELECTION');
     const [language, setLanguage] = useState<'EN' | 'VN'>('EN');
     const [selectedService, setSelectedService] = useState<ServiceType | null>(null);

@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-import { useAuth } from '../../../../stores/AuthContext';
-import { useBranches } from '../../../../stores/BranchContext';
+import { useAuthStore, useBranchStore } from '../../../../stores';
 import { API_BASE_URL } from '../../../../config/constants';
+import {
+    Button,
+    ButtonIcon,
+    TextInput,
+    Dropdown,
+    Modal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Badge,
+    Table,
+    TableHeader,
+    TableBody,
+    TableRow,
+    TableHead,
+    TableCell,
+    TableEmpty
+} from '../../../../components/ui';
 
 interface User {
     id: string;
@@ -16,12 +33,13 @@ interface User {
 }
 
 export const UserManagementPage: React.FC = () => {
+    const { user: authUser } = useAuthStore();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const { branches } = useBranches();
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const { branches } = useBranchStore();
 
     // Load users from API
     useEffect(() => {
@@ -71,22 +89,22 @@ export const UserManagementPage: React.FC = () => {
     };
 
     const handleEdit = (user: User) => {
-        setCurrentUser({ ...user });
+        setEditingUser({ ...user });
         setIsEditModalOpen(true);
     };
 
     const handleSave = async () => {
-        if (!currentUser) return;
+        if (!editingUser) return;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/${currentUser.id}`, {
+            const response = await fetch(`${API_BASE_URL}/users/${editingUser.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    fullName: currentUser.fullName,
-                    email: currentUser.email || currentUser.username,
-                    role: currentUser.role,
-                    branchId: currentUser.branchId,
+                    fullName: editingUser.fullName,
+                    email: editingUser.email || editingUser.username,
+                    role: editingUser.role,
+                    branchId: editingUser.branchId,
                 }),
             });
 
@@ -99,10 +117,18 @@ export const UserManagementPage: React.FC = () => {
             // Update local state
             setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
             setIsEditModalOpen(false);
-            setCurrentUser(null);
+            setEditingUser(null);
         } catch (err) {
             console.error('Error updating user:', err);
             alert('Failed to update user. Please try again.');
+        }
+    };
+
+    const getRoleBadgeVariant = (role: string): 'success' | 'warning' | 'info' => {
+        switch (role) {
+            case 'ADMIN': return 'warning';
+            case 'MANAGER': return 'info';
+            default: return 'success';
         }
     };
 
@@ -126,12 +152,9 @@ export const UserManagementPage: React.FC = () => {
                         <h2 className="text-lg font-semibold text-red-900">Error Loading Users</h2>
                     </div>
                     <p className="text-red-700 mb-4">{error}</p>
-                    <button
-                        onClick={loadUsers}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
+                    <Button onClick={loadUsers} variant="danger">
                         Try Again
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -144,37 +167,33 @@ export const UserManagementPage: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
                     <p className="text-gray-500">Manage system access and roles</p>
                 </div>
-                <button
-                    onClick={loadUsers}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-white rounded-lg border border-gray-200 transition-colors"
-                >
-                    <Icons.RefreshCw size={16} />
+                <Button onClick={loadUsers} variant="outline" leftIcon={<Icons.RefreshCw size={16} />}>
                     Refresh
-                </button>
+                </Button>
             </div>
 
             {users.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-                    <Icons.Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
-                    <p className="text-gray-500">There are no users in the system yet.</p>
-                </div>
+                <TableEmpty
+                    icon={<Icons.Users className="w-16 h-16 text-gray-300" />}
+                    title="No Users Found"
+                    description="There are no users in the system yet."
+                />
             ) : (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="p-4 font-semibold text-gray-600">Name</th>
-                                <th className="p-4 font-semibold text-gray-600">Email</th>
-                                <th className="p-4 font-semibold text-gray-600">Role</th>
-                                <th className="p-4 font-semibold text-gray-600">Branch</th>
-                                <th className="p-4 font-semibold text-gray-600 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 font-medium text-gray-900 flex items-center gap-3">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Branch</TableHead>
+                            <TableHead align="right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {users.map(user => (
+                            <TableRow key={user.id}>
+                                <TableCell className="font-medium text-gray-900">
+                                    <div className="flex items-center gap-3">
                                         {user.avatarUrl ? (
                                             <img
                                                 src={user.avatarUrl}
@@ -187,111 +206,95 @@ export const UserManagementPage: React.FC = () => {
                                             </div>
                                         )}
                                         {user.fullName}
-                                    </td>
-                                    <td className="p-4 text-gray-600">{user.email || user.username}</td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
-                                                user.role === 'MANAGER' ? 'bg-orange-100 text-orange-700' :
-                                                    'bg-blue-100 text-blue-700'
-                                            }`}>
-                                            {user.role}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-gray-600">
-                                        {branches.find(b => b.id === user.branchId)?.name || user.branchId || '-'}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <button
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-gray-600">
+                                    {user.email || user.username}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                                        {user.role}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-gray-600">
+                                    {branches.find(b => b.id === user.branchId)?.name || user.branchId || '-'}
+                                </TableCell>
+                                <TableCell align="right">
+                                    <div className="flex justify-end gap-2">
+                                        <ButtonIcon
                                             onClick={() => handleEdit(user)}
-                                            className="text-gray-400 hover:text-blue-600 mx-2"
+                                            icon={<Icons.Edit2 size={16} />}
                                             title="Edit"
-                                        >
-                                            <Icons.Edit2 size={16} />
-                                        </button>
-                                        <button
+                                            className="text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                        />
+                                        <ButtonIcon
                                             onClick={() => handleDelete(user.id)}
-                                            className="text-gray-400 hover:text-red-600"
+                                            icon={<Icons.Trash2 size={16} />}
                                             title="Delete"
-                                        >
-                                            <Icons.Trash2 size={16} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                            className="text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                        />
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             )}
 
             {/* Edit User Modal */}
-            {isEditModalOpen && currentUser && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-                        <h2 className="text-xl font-bold mb-6">Edit User</h2>
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+                <ModalHeader onClose={() => setIsEditModalOpen(false)}>
+                    Edit User
+                </ModalHeader>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    value={currentUser.fullName}
-                                    onChange={e => setCurrentUser({ ...currentUser, fullName: e.target.value })}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={currentUser.email || currentUser.username}
-                                    onChange={e => setCurrentUser({ ...currentUser, email: e.target.value })}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                <select
-                                    value={currentUser.role}
-                                    onChange={e => setCurrentUser({ ...currentUser, role: e.target.value as any })}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                >
-                                    <option value="ADMIN">ADMIN</option>
-                                    <option value="MANAGER">MANAGER</option>
-                                    <option value="TELLER">TELLER</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                                <select
-                                    value={currentUser.branchId || ''}
-                                    onChange={e => setCurrentUser({ ...currentUser, branchId: e.target.value })}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                >
-                                    <option value="">Select Branch</option>
-                                    {branches.map(branch => (
-                                        <option key={branch.id} value={branch.id}>{branch.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                {editingUser && (
+                    <ModalBody className="space-y-4">
+                        <TextInput
+                            label="Name"
+                            value={editingUser.fullName}
+                            onChange={e => setEditingUser({ ...editingUser, fullName: e.target.value })}
+                        />
 
-                        <div className="flex justify-end gap-3 mt-8">
-                            <button
-                                onClick={() => setIsEditModalOpen(false)}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-lg shadow-blue-200"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        <TextInput
+                            label="Email"
+                            type="email"
+                            value={editingUser.email || editingUser.username}
+                            onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
+                        />
+
+                        <Dropdown
+                            label="Role"
+                            value={editingUser.role}
+                            onChange={e => setEditingUser({ ...editingUser, role: e.target.value as any })}
+                            options={[
+                                { value: 'ADMIN', label: 'ADMIN' },
+                                { value: 'MANAGER', label: 'MANAGER' },
+                                { value: 'TELLER', label: 'TELLER' }
+                            ]}
+                        />
+
+                        <Dropdown
+                            label="Branch"
+                            value={editingUser.branchId || ''}
+                            onChange={e => setEditingUser({ ...editingUser, branchId: e.target.value })}
+                        >
+                            <option value="">Select Branch</option>
+                            {branches.map(branch => (
+                                <option key={branch.id} value={branch.id}>{branch.name}</option>
+                            ))}
+                        </Dropdown>
+                    </ModalBody>
+                )}
+
+                <ModalFooter>
+                    <Button variant="ghost" onClick={() => setIsEditModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSave}>
+                        Save Changes
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </div>
     );
 };
