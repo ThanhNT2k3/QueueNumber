@@ -8,6 +8,7 @@ public class CreateTicketRequest
     public string? CustomerName { get; set; }
     public CustomerSegment CustomerSegment { get; set; }
     public string? CustomerId { get; set; }
+    public string? BranchId { get; set; }
 }
 
 public class CreateTicketResponse
@@ -21,6 +22,7 @@ public class CreateTicketResponse
     public string? CustomerName { get; set; }
     public CustomerSegment CustomerSegment { get; set; }
     public string? CustomerId { get; set; }
+    public string? BranchId { get; set; }
 }
 
 public class CallTicketRequest
@@ -43,4 +45,5 @@ public class TicketDto
     public string? CustomerId { get; set; }
     public Guid? CounterId { get; set; }
     public int RecallCount { get; set; }
+    public string? BranchId { get; set; }
 }

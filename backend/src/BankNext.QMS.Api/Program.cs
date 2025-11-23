@@ -14,7 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -31,6 +36,7 @@ builder.Services.AddScoped<TicketService>();
 // Repositories
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<ICounterRepository, CounterRepository>();
+builder.Services.AddScoped<ICounterAssignmentHistoryRepository, CounterAssignmentHistoryRepository>();
 
 // Infrastructure Services
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();

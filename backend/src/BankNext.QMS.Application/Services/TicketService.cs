@@ -42,6 +42,7 @@ public class TicketService
             CustomerName = request.CustomerName,
             CustomerSegment = request.CustomerSegment,
             CustomerId = request.CustomerId,
+            BranchId = request.BranchId,
             RecallCount = 0
         };
 
@@ -64,6 +65,7 @@ public class TicketService
         ticket.Status = TicketStatus.CALLED;
         ticket.CalledTime = DateTimeOffset.UtcNow;
         ticket.CounterId = request.CounterId;
+        ticket.ServedByUserId = counter.AssignedUserId;
         ticket.RecallCount = 0;
 
         counter.CurrentTicketId = ticket.Id;
@@ -106,11 +108,32 @@ public class TicketService
         return MapToDto(ticket);
     }
 
-    public async Task<IEnumerable<TicketDto>> GetTicketsAsync(TicketStatus? status, ServiceType? serviceType)
+    public async Task<IEnumerable<TicketDto>> GetTicketsAsync(
+        TicketStatus? status, 
+        ServiceType? serviceType,
+        DateTimeOffset? fromDate = null,
+        DateTimeOffset? toDate = null,
+        Guid? staffId = null,
+        string? branchId = null)
     {
         IEnumerable<Ticket> tickets;
 
-        if (status.HasValue && serviceType.HasValue)
+        if (fromDate.HasValue || toDate.HasValue || staffId.HasValue || branchId != null)
+        {
+            // Adjust toDate to end of day if it's provided (to include the full day)
+            var queryToDate = toDate;
+            if (queryToDate.HasValue && queryToDate.Value.TimeOfDay == TimeSpan.Zero)
+            {
+                queryToDate = queryToDate.Value.AddDays(1).AddTicks(-1);
+            }
+
+            tickets = await _ticketRepository.GetTicketsAsync(fromDate, queryToDate, staffId, branchId);
+            
+            // Apply remaining in-memory filters if mixed (though repo handles most)
+            if (status.HasValue) tickets = tickets.Where(t => t.Status == status.Value);
+            if (serviceType.HasValue) tickets = tickets.Where(t => t.ServiceType == serviceType.Value);
+        }
+        else if (status.HasValue && serviceType.HasValue)
         {
             var byStatus = await _ticketRepository.GetByStatusAsync(status.Value);
             tickets = byStatus.Where(t => t.ServiceType == serviceType.Value);
@@ -155,7 +178,8 @@ public class TicketService
             PriorityScore = ticket.PriorityScore,
             CustomerName = ticket.CustomerName,
             CustomerSegment = ticket.CustomerSegment,
-            CustomerId = ticket.CustomerId
+            CustomerId = ticket.CustomerId,
+            BranchId = ticket.BranchId
         };
     }
 
@@ -175,7 +199,8 @@ public class TicketService
             CustomerSegment = ticket.CustomerSegment,
             CustomerId = ticket.CustomerId,
             CounterId = ticket.CounterId,
-            RecallCount = ticket.RecallCount
+            RecallCount = ticket.RecallCount,
+            BranchId = ticket.BranchId
         };
     }
 }

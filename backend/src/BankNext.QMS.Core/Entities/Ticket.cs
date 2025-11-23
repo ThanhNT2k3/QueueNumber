@@ -14,6 +14,7 @@ public class Ticket
     public DateTimeOffset? CompletedTime { get; set; }
     
     public Guid? CounterId { get; set; }
+    public Guid? ServedByUserId { get; set; }
     // Navigation property will be added later if needed, keeping it simple for now to avoid circular deps in simple models
     // public Counter? Counter { get; set; }
 

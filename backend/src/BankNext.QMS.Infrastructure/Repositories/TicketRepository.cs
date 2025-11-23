@@ -78,4 +78,23 @@ public class TicketRepository : ITicketRepository
         var allTickets = await _context.Tickets.ToListAsync();
         return allTickets.Where(t => t.Status == TicketStatus.WAITING);
     }
+
+    public async Task<IEnumerable<Ticket>> GetTicketsAsync(DateTimeOffset? fromDate, DateTimeOffset? toDate, Guid? staffId, string? branchId)
+    {
+        var query = _context.Tickets.AsQueryable();
+
+        if (fromDate.HasValue)
+            query = query.Where(t => t.CreatedTime >= fromDate.Value);
+        
+        if (toDate.HasValue)
+            query = query.Where(t => t.CreatedTime <= toDate.Value);
+            
+        if (staffId.HasValue)
+            query = query.Where(t => t.ServedByUserId == staffId.Value);
+
+        if (!string.IsNullOrEmpty(branchId))
+            query = query.Where(t => t.BranchId == branchId);
+
+        return await query.ToListAsync();
+    }
 }

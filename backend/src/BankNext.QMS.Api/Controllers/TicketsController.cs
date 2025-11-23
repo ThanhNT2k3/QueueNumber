@@ -26,9 +26,13 @@ public class TicketsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TicketDto>>> GetTickets(
         [FromQuery] TicketStatus? status, 
-        [FromQuery] ServiceType? service)
+        [FromQuery] ServiceType? service,
+        [FromQuery] DateTimeOffset? fromDate,
+        [FromQuery] DateTimeOffset? toDate,
+        [FromQuery] Guid? staffId,
+        [FromQuery] string? branchId)
     {
-        var tickets = await _ticketService.GetTicketsAsync(status, service);
+        var tickets = await _ticketService.GetTicketsAsync(status, service, fromDate, toDate, staffId, branchId);
         return Ok(tickets);
     }
 

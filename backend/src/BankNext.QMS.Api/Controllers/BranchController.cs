@@ -116,4 +116,15 @@ public class BranchController : ControllerBase
 
         return NoContent();
     }
+    [HttpGet("{id}/staff")]
+    public async Task<ActionResult<IEnumerable<User>>> GetBranchStaff(string id)
+    {
+        // If HQ, return all staff from all branches
+        // Otherwise, return staff from specific branch
+        var staff = id == "HQ" 
+            ? await _context.Users.ToListAsync()
+            : await _context.Users.Where(u => u.BranchId == id).ToListAsync();
+            
+        return staff;
+    }
 }

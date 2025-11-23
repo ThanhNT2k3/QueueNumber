@@ -14,6 +14,7 @@ import { UserManagement } from './features/admin/UserManagement';
 import { BranchManagement } from './features/admin/BranchManagement';
 import { CategoryManagement } from './features/admin/CategoryManagement';
 import { Reports } from './features/reports/Reports';
+import { CounterManagement } from './features/manager/CounterManagement';
 import * as Icons from 'lucide-react';
 
 const ProtectedRoute = ({ children, roles }: { children: React.ReactElement, roles?: string[] }) => {
@@ -83,11 +84,16 @@ const App: React.FC = () => {
               </NavLink>
             )}
 
-            {/* MANAGER: Reports */}
+            {/* MANAGER: Reports & Counters */}
             {user?.role === 'MANAGER' && (
-              <NavLink to="/reports" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-                <Icons.FileBarChart size={14} /> <span className="hidden md:inline">REPORTS</span>
-              </NavLink>
+              <>
+                <NavLink to="/reports" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                  <Icons.FileBarChart size={14} /> <span className="hidden md:inline">REPORTS</span>
+                </NavLink>
+                <NavLink to="/manager/counters" className={({ isActive }) => `px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                  <Icons.Settings2 size={14} /> <span className="hidden md:inline">COUNTERS</span>
+                </NavLink>
+              </>
             )}
 
             {/* ADMIN: Users, Branches & Categories */}
@@ -163,6 +169,12 @@ const App: React.FC = () => {
           <Route path="/reports" element={
             <ProtectedRoute roles={['MANAGER']}>
               <Reports />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/manager/counters" element={
+            <ProtectedRoute roles={['MANAGER']}>
+              <CounterManagement />
             </ProtectedRoute>
           } />
 

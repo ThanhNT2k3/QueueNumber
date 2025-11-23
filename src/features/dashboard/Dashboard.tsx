@@ -13,25 +13,95 @@ export const Dashboard: React.FC = () => {
   const isManager = user?.role === 'MANAGER';
   const userBranchId = user?.branchId;
 
-  const displayTickets = (isManager && userBranchId)
-    ? tickets.filter(t => t.branchId === userBranchId)
-    : tickets;
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<any[]>([]);
+  const [isFiltering, setIsFiltering] = useState(false);
 
-  // Simulated Data Calculation
-  const data = [
-    { name: '9AM', served: 12, waiting: 4 },
-    { name: '10AM', served: 19, waiting: 8 },
-    { name: '11AM', served: 25, waiting: 15 },
-    { name: '12PM', served: 15, waiting: 2 },
-    { name: '1PM', served: 20, waiting: 5 },
-    { name: '2PM', served: 30, waiting: 12 },
-  ];
+  // Fetch staff for filter
+  useEffect(() => {
+    const fetchStaff = async () => {
+      if (user?.branchId) {
+        try {
+          const res = await fetch(`http://localhost:5257/api/branch/${user.branchId}/staff`);
+          if (res.ok) {
+            const data = await res.json();
+            setStaffList(data);
+          }
+        } catch (e) {
+          console.error("Failed to fetch staff", e);
+        }
+      }
+    };
+    fetchStaff();
+  }, [user?.branchId]);
 
-  const performanceData = counters.map(c => ({
-    name: c.name.replace('Counter ', 'C'),
-    tickets: Math.floor(Math.random() * 50) + 10, // Simulated
-    avgTime: Math.floor(Math.random() * 10) + 2
-  }));
+  // Fetch filtered tickets
+  const handleFilter = async () => {
+    setIsFiltering(true);
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('fromDate', startDate);
+      if (endDate) params.append('toDate', endDate); // Backend might need time adjustment or handle inclusive
+      if (selectedStaffId) params.append('staffId', selectedStaffId);
+      if (user?.branchId) params.append('branchId', user.branchId);
+
+      const res = await fetch(`http://localhost:5257/api/tickets?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setFilteredTickets(data);
+      }
+    } catch (e) {
+      console.error("Failed to filter tickets", e);
+    }
+  };
+
+  // Initial load or reset
+  useEffect(() => {
+    // If no filter active, use context tickets (live)
+    if (!isFiltering) {
+      // Filter by branch if manager
+      const branchTickets = (isManager && userBranchId)
+        ? tickets.filter(t => t.branchId === userBranchId)
+        : tickets;
+      setFilteredTickets(branchTickets);
+    }
+  }, [tickets, isManager, userBranchId, isFiltering]);
+
+  const displayTickets = filteredTickets;
+
+  // Simulated Data Calculation (Update to use displayTickets)
+  // Group by hour for the chart
+  const hourlyData = Array.from({ length: 10 }, (_, i) => {
+    const hour = i + 8; // 8 AM to 5 PM
+    const hourLabel = hour > 12 ? `${hour - 12}PM` : `${hour}AM`;
+
+    const ticketsInHour = displayTickets.filter(t => {
+      const date = new Date(t.createdTime);
+      return date.getHours() === hour;
+    });
+
+    return {
+      name: hourLabel,
+      served: ticketsInHour.filter(t => t.status === 3).length, // Completed
+      waiting: ticketsInHour.filter(t => t.status === 0).length // Waiting
+    };
+  });
+
+  const data = hourlyData;
+
+  const performanceData = counters.map(c => {
+    // Count tickets served by this counter in the filtered set
+    // Note: Ticket entity has CounterId.
+    const count = displayTickets.filter(t => t.counterId === c.id && t.status === 3).length;
+    return {
+      name: c.name.replace('Counter ', 'C'),
+      tickets: count,
+      avgTime: Math.floor(Math.random() * 10) + 2 // Mock avg time for now as we don't calculate it yet
+    };
+  });
 
   // Calculate CSAT from actual tickets
   const ratedTickets = displayTickets.filter(t => t.feedbackRating !== undefined);
@@ -53,9 +123,49 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
         </div>
-        <div className="bg-white px-4 py-2 rounded-lg shadow-sm border flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-sm font-medium text-gray-600">System Healthy</span>
+
+        {/* Filter Controls */}
+        <div className="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-2 px-2">
+            <span className="text-xs font-bold text-gray-500 uppercase">Date Range</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-gray-400">-</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="h-8 w-px bg-gray-200"></div>
+
+          <div className="flex items-center gap-2 px-2">
+            <span className="text-xs font-bold text-gray-500 uppercase">Staff</span>
+            <select
+              value={selectedStaffId}
+              onChange={(e) => setSelectedStaffId(e.target.value)}
+              className="border rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+            >
+              <option value="">All Staff</option>
+              {staffList.map(staff => (
+                <option key={staff.id} value={staff.id}>{staff.fullName}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleFilter}
+            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Icons.Filter size={14} />
+            Filter
+          </button>
         </div>
       </div>
 

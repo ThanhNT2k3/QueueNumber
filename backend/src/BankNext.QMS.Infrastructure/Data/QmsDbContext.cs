@@ -14,6 +14,7 @@ public class QmsDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Branch> Branches { get; set; }
     public DbSet<Category> Categories { get; set; }
+    public DbSet<CounterAssignmentHistory> CounterAssignmentHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

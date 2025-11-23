@@ -64,6 +64,7 @@ export interface Counter {
   lastServedTicketId?: string | null;
   serviceTags: ServiceType[];
   branchId?: string;
+  assignedUserId?: string | null;
 }
 
 export interface ServiceDefinition {

@@ -68,7 +68,7 @@ public static class DbSeeder
                 Name = "VIP Counter",
                 Status = CounterStatus.ONLINE,
                 ServiceTags = "VIP,DEPOSIT,WITHDRAWAL,LOAN,CONSULTATION",
-                BranchId = "HQ"
+                BranchId = "B01"
             }
         };
 

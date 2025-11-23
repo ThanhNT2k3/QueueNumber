@@ -9,6 +9,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Role { get; set; } = "TELLER"; // ADMIN, TELLER, MANAGER
+    public string? Email { get; set; }
     public string? AvatarUrl { get; set; }
     public string? BranchId { get; set; }
 }
