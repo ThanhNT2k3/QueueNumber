@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 
 export const CounterDisplay: React.FC = () => {
-    const { tickets, counters } = useQMSStore();
+    const { tickets, counters, isInitialized, error } = useQMSStore();
     const [searchParams] = useSearchParams();
     const counterIdFromUrl = searchParams.get('counterId');
 
@@ -22,7 +22,6 @@ export const CounterDisplay: React.FC = () => {
 
     const counter = counters.find(c => c.id === selectedCounterId);
     const currentTicket = tickets.find(t => t.id === counter?.currentTicketId);
-    console.log("tickets :", tickets);
 
     // Auto-select counter logic
     useEffect(() => {
@@ -92,12 +91,44 @@ export const CounterDisplay: React.FC = () => {
     }, [currentTicket?.id]);
 
     // Show loading state while counters are being fetched
-    if (counters.length === 0) {
+    if (!isInitialized && counters.length === 0) {
         return (
             <div className="h-full flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading display...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="h-full flex items-center justify-center bg-gray-50">
+                <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-lg">
+                    <Icons.AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Connection Error</h3>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (counters.length === 0) {
+        return (
+            <div className="h-full flex items-center justify-center bg-gray-50">
+                <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-lg">
+                    <Icons.ServerCrash className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">No Counters Found</h3>
+                    <p className="text-gray-600">
+                        The system could not find any counters. Please contact the administrator to configure counters.
+                    </p>
                 </div>
             </div>
         );

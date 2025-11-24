@@ -9,6 +9,8 @@ interface QMSStore {
     tickets: Ticket[];
     counters: Counter[];
     connection: signalR.HubConnection | null;
+    isInitialized: boolean;
+    error: string | null;
 
     // Actions
     initialize: () => Promise<void>;
@@ -47,6 +49,8 @@ export const useQMSStore = create<QMSStore>()(
             tickets: [],
             counters: [],
             connection: null,
+            isInitialized: false,
+            error: null,
 
             initialize: async () => {
                 // 1. Fetch Initial Data
@@ -70,10 +74,21 @@ export const useQMSStore = create<QMSStore>()(
                                 branchId: c.branchId,
                                 status: c.status === 0 ? 'ONLINE' : c.status === 1 ? 'OFFLINE' : 'PAUSED'
                             }));
+                            state.isInitialized = true;
+                            state.error = null;
+                        });
+                    } else {
+                        set((state) => {
+                            state.error = `Failed to fetch data. Tickets: ${ticketsRes.status}, Counters: ${countersRes.status}`;
+                            state.isInitialized = true; // Mark as initialized even if failed so we stop loading
                         });
                     }
                 } catch (err) {
                     console.error("Failed to fetch initial data", err);
+                    set((state) => {
+                        state.error = err instanceof Error ? err.message : 'Unknown error occurred during initialization';
+                        state.isInitialized = true;
+                    });
                 }
 
                 // 2. Setup SignalR
