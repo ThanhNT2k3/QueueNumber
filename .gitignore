@@ -27,7 +27,7 @@ bld/
 backend/**/bin/
 backend/**/obj/
 **/Debug/
-
+backend/src/BankNext.QMS.Api/bin/Debug/net6.0
 blazor-frontend/bin/
 blazor-frontend/obj/
 
