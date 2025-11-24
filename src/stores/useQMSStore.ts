@@ -105,7 +105,12 @@ export const useQMSStore = create<QMSStore>()(
 
                     newConnection.on('TicketCreated', (ticket) => {
                         set((state) => {
-                            state.tickets.push(mapTicket(ticket));
+                            const existingIndex = state.tickets.findIndex(t => t.id === ticket.id);
+                            if (existingIndex === -1) {
+                                state.tickets.push(mapTicket(ticket));
+                            } else {
+                                state.tickets[existingIndex] = mapTicket(ticket);
+                            }
                         });
                     });
 
@@ -126,7 +131,6 @@ export const useQMSStore = create<QMSStore>()(
                             }
                         });
 
-                        // Play voice
                         const counter = get().counters.find(c => c.id === ticket.counterId);
                         if (counter) playVoiceAnnouncement(ticket.number, counter.name);
                     });
@@ -271,11 +275,23 @@ export const useQMSStore = create<QMSStore>()(
 
             moveToEnd: async (ticketId, reason) => {
                 try {
-                    await fetch(`${API_BASE_URL}/queue/tickets/${ticketId}/move-to-end`, {
+                    const response = await fetch(`${API_BASE_URL}/queue/tickets/${ticketId}/move-to-end`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason })
                     });
+
+                    if (response.ok) {
+                        const updatedTicket = await response.json();
+                        set((state) => {
+                            const index = state.tickets.findIndex(t => t.id === ticketId);
+                            if (index !== -1) {
+                                state.tickets[index] = mapTicket(updatedTicket);
+                            }
+                        });
+                    } else {
+                        console.error('Failed to move ticket to end:', response.statusText);
+                    }
                 } catch (error) {
                     console.error('Failed to move ticket to end:', error);
                 }

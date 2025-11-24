@@ -65,6 +65,20 @@ public class TicketsController : ControllerBase
         // TODO: Implement transfer logic in TicketService
         return Ok();
     }
+
+    [HttpDelete("clear")]
+    public async Task<IActionResult> ClearTickets()
+    {
+        try
+        {
+            await _ticketService.ClearAllTicketsAsync();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
+    }
 }
 
 public class TransferTicketRequest

@@ -157,6 +157,16 @@ public class TicketService
             .Select(MapToDto);
     }
 
+    public async Task ClearAllTicketsAsync()
+    {
+        var allTickets = await _ticketRepository.GetAllAsync();
+        foreach (var ticket in allTickets)
+        {
+            await _ticketRepository.DeleteAsync(ticket);
+        }
+        await _ticketRepository.SaveChangesAsync();
+    }
+
     private int CalculatePriority(CustomerSegment segment, ServiceType serviceType)
     {
         int priority = 0;
