@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BankNext.QMS.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2e54519b1c8c4a2fb368f9707cb0cff2b773a084")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3d403c9dfe90ae9c5723985650e7ca79a8a5b624")]
 [assembly: System.Reflection.AssemblyProductAttribute("BankNext.QMS.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BankNext.QMS.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
