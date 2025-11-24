@@ -26,6 +26,8 @@ bld/
 **/obj/
 backend/**/bin/
 backend/**/obj/
+**/Debug/
+
 blazor-frontend/bin/
 blazor-frontend/obj/
 
